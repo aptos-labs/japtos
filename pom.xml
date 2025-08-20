@@ -5,7 +5,7 @@
 
   <groupId>com.aptoslabs.japtos</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <name>japtos</name>
   <description>Aptos Java SDK for Android</description>
@@ -124,11 +124,6 @@
           <version>3.1.2</version>
         </plugin>
         <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.2</version>
-        </plugin>
-        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
-        <plugin>
           <artifactId>maven-site-plugin</artifactId>
           <version>3.12.1</version>
         </plugin>
@@ -139,21 +134,20 @@
 
         <!-- Distribution Management -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <configuration>
-            <altDeploymentRepository>
-              internal.repo::default::file://${project.build.directory}/mvn-artifact
-            </altDeploymentRepository>
-          </configuration>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.4</version>
           <executions>
             <execution>
-              <id>attach-sources</id>
+              <id>sign-artifacts</id>
+              <phase>verify</phase>
               <goals>
-                <goal>jar</goal>
+                <goal>sign</goal>
               </goals>
             </execution>
           </executions>
