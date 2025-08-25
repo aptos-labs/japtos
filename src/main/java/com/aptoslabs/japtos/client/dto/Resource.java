@@ -8,19 +8,19 @@ import com.google.gson.annotations.SerializedName;
 public class Resource {
     @SerializedName("type")
     private final String type;
-    
+
     @SerializedName("data")
     private final Object data;
-    
+
     public Resource(String type, Object data) {
         this.type = type;
         this.data = data;
     }
-    
+
     public String getType() {
         return type;
     }
-    
+
     public Object getData() {
         return data;
     }

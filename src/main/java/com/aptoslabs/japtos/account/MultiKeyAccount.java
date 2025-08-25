@@ -1,5 +1,6 @@
 package com.aptoslabs.japtos.account;
 
+import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.core.AuthenticationKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
@@ -7,23 +8,24 @@ import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.transaction.RawTransaction;
 import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
-import com.aptoslabs.japtos.transaction.authenticator.MultiEd25519Authenticator;
+import com.aptoslabs.japtos.transaction.authenticator.MultiKeyAuthenticator;
 import com.aptoslabs.japtos.utils.CryptoUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MultiEd25519 account implementation for multi-signature transactions.
+ * MultiKey account implementation that matches TypeScript SDK's MultiKeyAccount.
+ * This uses authentication scheme 3 (MultiKey) and BCS serialization.
  */
-public class MultiEd25519Account extends Account {
+public class MultiKeyAccount extends Account {
     private final List<Ed25519PrivateKey> privateKeys;
     private final List<Ed25519PublicKey> publicKeys;
     private final int threshold;
     private final AccountAddress accountAddress;
     private final List<Integer> signerIndices;
 
-    private MultiEd25519Account(List<Ed25519PrivateKey> privateKeys, List<Ed25519PublicKey> publicKeys, int threshold, List<Integer> signerIndices) {
+    private MultiKeyAccount(List<Ed25519PrivateKey> privateKeys, List<Ed25519PublicKey> publicKeys, int threshold, List<Integer> signerIndices) {
         this.privateKeys = privateKeys;
         this.publicKeys = publicKeys;
         this.threshold = threshold;
@@ -31,7 +33,7 @@ public class MultiEd25519Account extends Account {
         this.accountAddress = deriveAccountAddress();
     }
 
-    public static MultiEd25519Account fromPrivateKeys(List<Ed25519PrivateKey> privateKeys, int threshold) {
+    public static MultiKeyAccount fromPrivateKeys(List<Ed25519PrivateKey> privateKeys, int threshold) {
         List<Ed25519PublicKey> publicKeys = new ArrayList<>();
         for (Ed25519PrivateKey privateKey : privateKeys) {
             publicKeys.add(privateKey.publicKey());
@@ -41,10 +43,10 @@ public class MultiEd25519Account extends Account {
         for (int i = 0; i < privateKeys.size(); i++) {
             indices.add(i);
         }
-        return new MultiEd25519Account(privateKeys, publicKeys, threshold, indices);
+        return new MultiKeyAccount(privateKeys, publicKeys, threshold, indices);
     }
 
-    public static MultiEd25519Account from(List<Account> signers, List<Ed25519PublicKey> publicKeys, int threshold) {
+    public static MultiKeyAccount from(List<Account> signers, List<Ed25519PublicKey> publicKeys, int threshold) {
         // Validate inputs
         if (signers == null || publicKeys == null) {
             throw new IllegalArgumentException("Signers and public keys cannot be null");
@@ -101,8 +103,7 @@ public class MultiEd25519Account extends Account {
             sortedSignerIndices.add((Integer) pair[1]);
         }
 
-        // Use the provided public keys directly
-        return new MultiEd25519Account(sortedPrivateKeys, publicKeys, threshold, sortedSignerIndices);
+        return new MultiKeyAccount(sortedPrivateKeys, publicKeys, threshold, sortedSignerIndices);
     }
 
     /**
@@ -134,21 +135,21 @@ public class MultiEd25519Account extends Account {
 
     @Override
     public SigningScheme getSigningScheme() {
-        return SigningScheme.MULTI_ED25519;
+        return SigningScheme.MULTI_KEY;
     }
 
     @Override
     public AccountAuthenticator signWithAuthenticator(byte[] message) {
         // For simplicity, sign with the first private key
         Signature signature = privateKeys.get(0).sign(message);
-        return new MultiEd25519Authenticator(publicKeys, signature, threshold, signerIndices);
+        return new MultiKeyAuthenticator(publicKeys, signature, threshold, signerIndices);
     }
 
     @Override
     public AccountAuthenticator signTransactionWithAuthenticator(RawTransaction transaction) throws Exception {
         // For simplicity, sign with the first private key
         Signature signature = signTransaction(transaction);
-        return new MultiEd25519Authenticator(publicKeys, signature, threshold, signerIndices);
+        return new MultiKeyAuthenticator(publicKeys, signature, threshold, signerIndices);
     }
 
     @Override
@@ -170,20 +171,35 @@ public class MultiEd25519Account extends Account {
     }
 
     private AccountAddress deriveAccountAddress() {
-        // Derive auth key for MultiEd25519: sha3_256(concat(pubkeys..., threshold) || 0x01)
-        // This maintains backward compatibility for existing MultiEd25519 accounts
-        int n = publicKeys.size();
-        byte[] multiPk = new byte[n * 32 + 1];
-        int off = 0;
-        for (Ed25519PublicKey pk : publicKeys) {
-            byte[] b = pk.toBytes();
-            System.arraycopy(b, 0, multiPk, off, 32);
-            off += 32;
+        // Derive auth key for MultiKey using BCS serialization (matching TypeScript SDK)
+        // MultiKey serializes as: vector<AnyPublicKey> + u8 threshold
+        // AnyPublicKey serializes as: uleb128(variant) + public_key_bytes
+        // For Ed25519: variant=0, so it's: 0x00 + 32 bytes
+
+        try {
+            // Create BCS serializer
+            Serializer serializer = new Serializer();
+
+            // Serialize vector of public keys
+            serializer.serializeU32AsUleb128(publicKeys.size()); // Vector length
+            for (Ed25519PublicKey pk : publicKeys) {
+                serializer.serializeU32AsUleb128(0); // Ed25519 variant = 0
+                serializer.serializeBytes(pk.toBytes()); // 32 bytes
+            }
+
+            // Serialize threshold
+            serializer.serializeU8((byte) threshold);
+
+            // Get the serialized bytes
+            byte[] multiKeyBytes = serializer.toByteArray();
+
+            // Create authentication key with scheme 3 (MultiKey)
+            AuthenticationKey ak = AuthenticationKey.fromSchemeAndBytes((byte) 3, multiKeyBytes);
+            return ak.accountAddress();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to derive account address", e);
         }
-        multiPk[off] = (byte) (threshold & 0xFF);
-        // Scheme 1 for MultiEd25519 (maintaining backward compatibility)
-        AuthenticationKey ak = AuthenticationKey.fromSchemeAndBytes((byte) 1, multiPk);
-        return ak.accountAddress();
     }
 
     public List<Ed25519PrivateKey> getPrivateKeys() {

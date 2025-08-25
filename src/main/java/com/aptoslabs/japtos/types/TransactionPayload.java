@@ -7,7 +7,6 @@ import java.io.IOException;
 
 /**
  * Interface for transaction payloads.
-
  */
 public interface TransactionPayload extends Serializable {
     @Override

@@ -2,27 +2,26 @@ package com.aptoslabs.japtos.transaction.authenticator;
 
 import com.aptoslabs.japtos.bcs.Serializable;
 import com.aptoslabs.japtos.bcs.Serializer;
-import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
+import com.aptoslabs.japtos.core.crypto.Signature;
 
 import java.io.IOException;
 import java.util.List;
 
 /**
  * MultiEd25519 transaction authenticator.
-
  */
 public class TransactionAuthenticatorMultiEd25519 implements Serializable {
     private final List<Ed25519PublicKey> publicKeys;
     private final Signature signature;
     private final int threshold;
-    
+
     public TransactionAuthenticatorMultiEd25519(List<Ed25519PublicKey> publicKeys, Signature signature, int threshold) {
         this.publicKeys = publicKeys;
         this.signature = signature;
         this.threshold = threshold;
     }
-    
+
     @Override
     public void serialize(Serializer serializer) throws IOException {
         // TransactionAuthenticator variant: 1 = MultiEd25519
@@ -56,25 +55,25 @@ public class TransactionAuthenticatorMultiEd25519 implements Serializable {
         sigBytes[67] = 0x00;
         serializer.serializeBytes(sigBytes);
     }
-    
+
     public List<Ed25519PublicKey> getPublicKeys() {
         return publicKeys;
     }
-    
+
     public Signature getSignature() {
         return signature;
     }
-    
+
     public int getThreshold() {
         return threshold;
     }
-    
+
     @Override
     public String toString() {
         return "TransactionAuthenticatorMultiEd25519{" +
-            "publicKeys=" + publicKeys.toString() +
-            ", signature=" + signature.toString() +
-            ", threshold=" + threshold +
-            '}';
+                "publicKeys=" + publicKeys.toString() +
+                ", signature=" + signature.toString() +
+                ", threshold=" + threshold +
+                '}';
     }
 }

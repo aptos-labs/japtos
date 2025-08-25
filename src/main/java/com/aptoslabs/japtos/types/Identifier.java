@@ -7,29 +7,28 @@ import java.io.IOException;
 
 /**
  * Represents an identifier.
-
  */
 public class Identifier implements Serializable {
     private final String value;
-    
+
     public Identifier(String value) {
         this.value = value;
     }
-    
+
     @Override
     public void serialize(Serializer serializer) throws IOException {
         serializer.serializeString(value);
     }
-    
+
     public String getValue() {
         return value;
     }
-    
+
     @Override
     public String toString() {
         return value;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -37,7 +36,7 @@ public class Identifier implements Serializable {
         Identifier that = (Identifier) obj;
         return value.equals(that.value);
     }
-    
+
     @Override
     public int hashCode() {
         return value.hashCode();

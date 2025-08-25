@@ -5,7 +5,7 @@ package com.aptoslabs.japtos.utils;
  */
 public class HexUtils {
     private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
-    
+
     /**
      * Convert bytes to hex string
      */
@@ -18,7 +18,7 @@ public class HexUtils {
         }
         return new String(hexChars);
     }
-    
+
     /**
      * Convert hex string to bytes
      */
@@ -27,11 +27,11 @@ public class HexUtils {
         if (hex.startsWith("0x") || hex.startsWith("0X")) {
             hex = hex.substring(2);
         }
-        
+
         if (hex.length() % 2 != 0) {
             throw new IllegalArgumentException("Hex string must have even length");
         }
-        
+
         int len = hex.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
@@ -44,7 +44,7 @@ public class HexUtils {
         }
         return data;
     }
-    
+
     /**
      * Check if string is valid hex
      */
@@ -52,16 +52,16 @@ public class HexUtils {
         if (hex == null) {
             return false;
         }
-        
+
         // Remove 0x prefix if present
         if (hex.startsWith("0x") || hex.startsWith("0X")) {
             hex = hex.substring(2);
         }
-        
+
         if (hex.length() % 2 != 0) {
             return false;
         }
-        
+
         for (char c : hex.toCharArray()) {
             if (!Character.isDigit(c) && (c < 'a' || c > 'f') && (c < 'A' || c > 'F')) {
                 return false;

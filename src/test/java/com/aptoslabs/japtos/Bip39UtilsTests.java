@@ -3,6 +3,7 @@ package com.aptoslabs.japtos;
 import com.aptoslabs.japtos.utils.Bip39Utils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -15,17 +16,17 @@ public class Bip39UtilsTests {
     void testEntropyToMnemonic() {
         // Test entropy string (with hyphens)
         String entropy = "9b4c9e83-a06e-4704-bc5f-b6a55d0dbb89";
-        
+
         // Expected mnemonic phrase
         String expectedMnemonic = "defense balance boat index fatal book remain champion cushion city escape huge";
-        
+
         // Convert entropy to mnemonic
         String actualMnemonic = Bip39Utils.entropyToMnemonic(entropy);
-        
+
         // Verify the result
-        assertEquals(expectedMnemonic, actualMnemonic, 
-            "Mnemonic generation should match expected phrase");
-        
+        assertEquals(expectedMnemonic, actualMnemonic,
+                "Mnemonic generation should match expected phrase");
+
         System.out.println("Input entropy: " + entropy);
         System.out.println("Generated mnemonic: " + actualMnemonic);
     }
