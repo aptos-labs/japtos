@@ -34,7 +34,7 @@ Add the Japtos SDK dependency to your `pom.xml`:
 <dependency>
   <groupId>com.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
