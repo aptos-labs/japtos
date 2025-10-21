@@ -1,6 +1,5 @@
 package com.aptoslabs.japtos.gasstation;
 
-import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.HttpClient;
 import com.aptoslabs.japtos.client.HttpClientImpl;
 import com.aptoslabs.japtos.client.dto.HttpResponse;
@@ -10,7 +9,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -35,10 +37,10 @@ public class GasStationClient {
     /**
      * Signs and submits a transaction to the gas station.
      *
-     * @param transaction the raw transaction to submit (can be RawTransaction or RawTransactionWithFeePayer)
-     * @param senderAuthenticator the authenticator for the transaction sender
+     * @param transaction             the raw transaction to submit (can be RawTransaction or RawTransactionWithFeePayer)
+     * @param senderAuthenticator     the authenticator for the transaction sender
      * @param secondaryAuthenticators optional authenticators for secondary signers
-     * @param recaptchaToken optional recaptcha token
+     * @param recaptchaToken          optional recaptcha token
      * @return object containing the transaction hash
      * @throws Exception if the submission fails
      */
@@ -93,7 +95,7 @@ public class GasStationClient {
             System.err.println("URL: " + url);
             System.err.println("Status Code: " + response.getStatusCode());
             System.err.println("Response Body: " + response.getBody());
-            System.err.println("Request Body: " + requestBody.toString());
+            System.err.println("Request Body: " + requestBody);
             throw new GasStationClientException(errorMessage);
         }
 
@@ -117,7 +119,7 @@ public class GasStationClient {
         }
 
         String envSegment = "prod".equals(options.getEnv()) ? "" : "." + options.getEnv();
-        return String.format("https://api.%s%s.aptoslabs.com/gs/v1", 
+        return String.format("https://api.%s%s.aptoslabs.com/gs/v1",
                 options.getNetwork().toString().toLowerCase(), envSegment);
     }
 

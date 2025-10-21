@@ -73,21 +73,18 @@ public class SignedTransaction implements Serializable {
     public SignedTransaction(RawTransaction rawTransaction, AccountAuthenticator authenticator) {
         this.rawTransaction = rawTransaction;
         // Extract the appropriate transaction authenticator from the AccountAuthenticator
-        if (authenticator instanceof Ed25519Authenticator) {
-            Ed25519Authenticator ed25519Auth = (Ed25519Authenticator) authenticator;
+        if (authenticator instanceof Ed25519Authenticator ed25519Auth) {
             this.authenticator = new TransactionAuthenticatorEd25519(
                     ed25519Auth.getPublicKeyObject(),
                     ed25519Auth.getSignatureObject()
             );
-        } else if (authenticator instanceof MultiEd25519Authenticator) {
-            MultiEd25519Authenticator multiAuth = (MultiEd25519Authenticator) authenticator;
+        } else if (authenticator instanceof MultiEd25519Authenticator multiAuth) {
             this.authenticator = new TransactionAuthenticatorMultiEd25519(
                     multiAuth.getPublicKeys(),
                     multiAuth.getSignatureObject(),
                     multiAuth.getThreshold()
             );
-        } else if (authenticator instanceof MultiKeyAuthenticator) {
-            MultiKeyAuthenticator multiKeyAuth = (MultiKeyAuthenticator) authenticator;
+        } else if (authenticator instanceof MultiKeyAuthenticator multiKeyAuth) {
             // Wrap the AccountAuthenticator(MultiKey) inside TransactionAuthenticator.SingleSender(4)
             this.authenticator = new com.aptoslabs.japtos.transaction.authenticator.TransactionAuthenticatorSingleSender(multiKeyAuth);
         } else {
@@ -140,11 +137,9 @@ public class SignedTransaction implements Serializable {
      */
     public AccountAuthenticator getAuthenticator() {
         // Convert back to AccountAuthenticator for compatibility
-        if (authenticator instanceof TransactionAuthenticatorEd25519) {
-            TransactionAuthenticatorEd25519 ed25519Auth = (TransactionAuthenticatorEd25519) authenticator;
+        if (authenticator instanceof TransactionAuthenticatorEd25519 ed25519Auth) {
             return new Ed25519Authenticator(ed25519Auth.getPublicKey(), ed25519Auth.getSignature());
-        } else if (authenticator instanceof TransactionAuthenticatorMultiEd25519) {
-            TransactionAuthenticatorMultiEd25519 multiAuth = (TransactionAuthenticatorMultiEd25519) authenticator;
+        } else if (authenticator instanceof TransactionAuthenticatorMultiEd25519 multiAuth) {
             return new MultiEd25519Authenticator(multiAuth.getPublicKeys(), multiAuth.getSignature(), multiAuth.getThreshold());
         } else {
             throw new IllegalStateException("Unknown authenticator type");

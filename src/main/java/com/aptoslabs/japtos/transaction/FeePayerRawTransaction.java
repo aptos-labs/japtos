@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class FeePayerRawTransaction implements Serializable {
     private static final int TRANSACTION_VARIANT_FEE_PAYER = 1;
-    
+
     private final RawTransaction rawTransaction;
     private final List<AccountAddress> secondarySignerAddresses;
     private final AccountAddress feePayerAddress;

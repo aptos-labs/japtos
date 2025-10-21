@@ -17,7 +17,7 @@ public class GasStationTransactionSubmitter implements TransactionSubmitter {
     /**
      * Constructs a GasStationTransactionSubmitter with a GasStationClient.
      *
-     * @param client the gas station client to use
+     * @param client          the gas station client to use
      * @param feePayerAddress the address of the fee payer (gas sponsor)
      */
     public GasStationTransactionSubmitter(GasStationClient client, AccountAddress feePayerAddress) {
@@ -28,7 +28,7 @@ public class GasStationTransactionSubmitter implements TransactionSubmitter {
     /**
      * Constructs a GasStationTransactionSubmitter with GasStationClientOptions.
      *
-     * @param options the options for creating the gas station client
+     * @param options         the options for creating the gas station client
      * @param feePayerAddress the address of the fee payer (gas sponsor)
      */
     public GasStationTransactionSubmitter(GasStationClientOptions options, AccountAddress feePayerAddress) {

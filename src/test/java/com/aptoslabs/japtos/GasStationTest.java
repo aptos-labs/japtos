@@ -5,7 +5,6 @@ import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.AptosClient;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
-import com.aptoslabs.japtos.gasstation.GasStationClient;
 import com.aptoslabs.japtos.gasstation.GasStationClientOptions;
 import com.aptoslabs.japtos.gasstation.GasStationTransactionSubmitter;
 import com.aptoslabs.japtos.transaction.RawTransaction;
@@ -29,6 +28,7 @@ public class GasStationTest {
 
     /**
      * Configure your own variables to make this test working.
+     * Account derived from this private key must have USDC on Aptos Testnet for the test to pass.
      */
     private static final String PRIVATE_KEY = "";
     private static final String GAS_STATION_API_KEY = "";
@@ -110,7 +110,7 @@ public class GasStationTest {
         // Get fresh sequence number right before building transaction
         long sequenceNumber = gasStationClient.getNextSequenceNumber(testAccount.getAccountAddress());
         System.out.println("   Current sequence number: " + sequenceNumber);
-        
+
         // Get account info to verify
         var accountInfo = gasStationClient.getAccount(testAccount.getAccountAddress());
         System.out.println("   Verified sequence number from account: " + accountInfo.getSequenceNumber());
@@ -125,7 +125,7 @@ public class GasStationTest {
 
         // USDC token metadata address on Testnet
         AccountAddress currencyMetadata = AccountAddress.fromHex("0x69091fbab5f7d635ee7ac5098cf0c1efbe31d68fec0f2cd565e8d168daf52832");
-        System.out.println("   Currency metadata: " + currencyMetadata.toString());
+        System.out.println("   Currency metadata: " + currencyMetadata);
 
         // Create transaction calling settle_transaction function
         // Module: 0xb5f088849def11b2c3dd5516f3ebe9b7d88577a9992312a1681e5021c02405f1
@@ -167,13 +167,13 @@ public class GasStationTest {
         // For fee payer transactions, we need to sign the FeePayerRawTransaction structure
         // with the "APTOS::RawTransactionWithData" salt (not "APTOS::RawTransaction")
         AccountAddress feePayerAddr = AccountAddress.fromHex(GAS_STATION_FEE_PAYER);
-        com.aptoslabs.japtos.transaction.FeePayerRawTransaction feePayerTxn = 
+        com.aptoslabs.japtos.transaction.FeePayerRawTransaction feePayerTxn =
                 new com.aptoslabs.japtos.transaction.FeePayerRawTransaction(
                         raw,
                         java.util.List.of(), // No secondary signers
                         feePayerAddr
                 );
-        
+
         // Sign with the fee payer salt
         byte[] feePayerTxnBytes = feePayerTxn.bcsToBytes();
         System.out.println("   FeePayerRawTransaction bytes length: " + feePayerTxnBytes.length);
@@ -183,11 +183,11 @@ public class GasStationTest {
         byte[] signingMessage = new byte[prefixHash.length + feePayerTxnBytes.length];
         System.arraycopy(prefixHash, 0, signingMessage, 0, prefixHash.length);
         System.arraycopy(feePayerTxnBytes, 0, signingMessage, prefixHash.length, feePayerTxnBytes.length);
-        
+
         // Sign the signing message
         com.aptoslabs.japtos.core.crypto.Signature signature = testAccount.sign(signingMessage);
         AccountAuthenticator authenticator = new com.aptoslabs.japtos.transaction.authenticator.Ed25519Authenticator(
-                ((com.aptoslabs.japtos.account.Ed25519Account) testAccount).getPublicKey(),
+                testAccount.getPublicKey(),
                 signature
         );
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
@@ -251,12 +251,12 @@ public class GasStationTest {
             }
             if (e.getMessage().contains("E_CURRENCY_NOT_SUPPORTED")) {
                 System.out.println("   Note: Got E_CURRENCY_NOT_SUPPORTED from on-chain simulation.");
-                System.out.println("   🎉 THIS MEANS THE GAS STATION CLIENT IS WORKING PERFECTLY!");
-                System.out.println("   ✅ Transaction was correctly serialized (matching TypeScript format)");
-                System.out.println("   ✅ Gas station API accepted the transaction");
-                System.out.println("   ✅ Fee payer transaction was created successfully");
-                System.out.println("   ✅ Transaction was deserialized correctly");
-                System.out.println("   ✅ On-chain simulation was executed");
+                System.out.println("   THIS MEANS THE GAS STATION CLIENT IS WORKING PERFECTLY!");
+                System.out.println("   Transaction was correctly serialized (matching TypeScript format)");
+                System.out.println("   Gas station API accepted the transaction");
+                System.out.println("   Fee payer transaction was created successfully");
+                System.out.println("   Transaction was deserialized correctly");
+                System.out.println("   On-chain simulation was executed");
                 System.out.println("   The error is that the currency needs to be added to the supported list by admin.");
                 System.out.println("   This is a Move module configuration issue, not a client issue.");
                 System.out.println("   GAS STATION CLIENT IMPLEMENTATION IS COMPLETE AND WORKING!");
@@ -265,9 +265,9 @@ public class GasStationTest {
             if (e.getMessage().contains("NUMBER_OF_ARGUMENTS_MISMATCH")) {
                 System.out.println("   Note: Got NUMBER_OF_ARGUMENTS_MISMATCH from gas station simulation.");
                 System.out.println("   This means the gas station CLIENT IS WORKING CORRECTLY!");
-                System.out.println("   ✅ Transaction was deserialized successfully");
-                System.out.println("   ✅ Gas station accepted the fee payer transaction");
-                System.out.println("   ✅ Transaction simulation was attempted");
+                System.out.println("   Transaction was deserialized successfully");
+                System.out.println("   Gas station accepted the fee payer transaction");
+                System.out.println("   Transaction simulation was attempted");
                 System.out.println("   The error is that settle_transaction expects different arguments.");
                 System.out.println("   This is a test case issue, not a gas station client issue.");
                 System.out.println("   GAS STATION CLIENT IMPLEMENTATION IS COMPLETE AND WORKING!");
@@ -275,10 +275,10 @@ public class GasStationTest {
             }
             if (e.getMessage().contains("E_MERCHANT_NOT_FOUND")) {
                 System.out.println("   Note: Got E_MERCHANT_NOT_FOUND from on-chain simulation.");
-                System.out.println("   🎉 THIS MEANS THE GAS STATION CLIENT IS WORKING PERFECTLY!");
-                System.out.println("   ✅ Transaction was correctly serialized");
-                System.out.println("   ✅ Gas station API accepted the transaction");
-                System.out.println("   ✅ On-chain simulation was executed");
+                System.out.println("   THIS MEANS THE GAS STATION CLIENT IS WORKING PERFECTLY!");
+                System.out.println("   Transaction was correctly serialized");
+                System.out.println("   Gas station API accepted the transaction");
+                System.out.println("   On-chain simulation was executed");
                 System.out.println("   The error is that merchant ID 1000 doesn't exist in the module.");
                 System.out.println("   This is a test data issue, not a client issue.");
                 System.out.println("   GAS STATION CLIENT IMPLEMENTATION IS COMPLETE AND WORKING!");
