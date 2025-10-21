@@ -30,6 +30,13 @@ public class PendingTransaction {
     @SerializedName("signature")
     private final Object signature;
 
+    /**
+     * Constructor accepting only hash (useful for gas station responses).
+     */
+    public PendingTransaction(String hash) {
+        this(hash, null, null, null, null, null, null, null);
+    }
+
     public PendingTransaction(
             String hash,
             String sender,

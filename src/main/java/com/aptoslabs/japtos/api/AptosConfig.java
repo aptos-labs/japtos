@@ -3,6 +3,10 @@ package com.aptoslabs.japtos.api;
 import com.aptoslabs.japtos.client.HttpClient;
 import com.aptoslabs.japtos.client.HttpClientImpl;
 import com.aptoslabs.japtos.client.dto.HttpResponse;
+import com.aptoslabs.japtos.transaction.TransactionSubmitter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Configuration for the Aptos SDK.
@@ -13,6 +17,8 @@ public class AptosConfig {
     private final String faucet;
     private final HttpClient client;
     private final Network network;
+    private final Map<String, Object> pluginSettings;
+    private final TransactionSubmitter transactionSubmitter;
 
     public AptosConfig(AptosConfigBuilder builder) {
         this.fullnode = builder.fullnode;
@@ -20,6 +26,8 @@ public class AptosConfig {
         this.faucet = builder.faucet;
         this.client = builder.client != null ? builder.client : new HttpClientImpl();
         this.network = builder.network;
+        this.pluginSettings = builder.pluginSettings != null ? new HashMap<>(builder.pluginSettings) : new HashMap<>();
+        this.transactionSubmitter = builder.transactionSubmitter;
     }
 
     public static AptosConfigBuilder builder() {
@@ -44,6 +52,14 @@ public class AptosConfig {
 
     public Network getNetwork() {
         return network;
+    }
+
+    public Map<String, Object> getPluginSettings() {
+        return pluginSettings;
+    }
+
+    public TransactionSubmitter getTransactionSubmitter() {
+        return transactionSubmitter;
     }
 
     /**
@@ -149,6 +165,8 @@ public class AptosConfig {
         private String faucet;
         private HttpClient client;
         private Network network;
+        private Map<String, Object> pluginSettings;
+        private TransactionSubmitter transactionSubmitter;
 
         public AptosConfigBuilder() {
         }
@@ -178,6 +196,16 @@ public class AptosConfig {
             this.fullnode = network.getFullnode();
             this.indexer = network.getIndexer();
             this.faucet = network.getFaucet();
+            return this;
+        }
+
+        public AptosConfigBuilder pluginSettings(Map<String, Object> pluginSettings) {
+            this.pluginSettings = pluginSettings;
+            return this;
+        }
+
+        public AptosConfigBuilder transactionSubmitter(TransactionSubmitter transactionSubmitter) {
+            this.transactionSubmitter = transactionSubmitter;
             return this;
         }
 
