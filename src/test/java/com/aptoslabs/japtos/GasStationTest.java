@@ -30,11 +30,12 @@ public class GasStationTest {
      * Configure your own variables to make this test working.
      * Account derived from this private key must have USDC on Aptos Testnet for the test to pass.
      */
-    private static final String PRIVATE_KEY = "";
-    private static final String GAS_STATION_API_KEY = "";
-    private static final String SETTLE_FUNCTION_ADDRESS = "";
-    private static final String GAS_STATION_FEE_PAYER = "";
     private static final long SETTLE_AMOUNT_OCTAS = 1000; // 0.001 USDC in smallest units
+
+    private static final String PRIVATE_KEY = "put_yours_here_lol";
+    private static final String GAS_STATION_API_KEY = "yours_not_mine_lol";
+    private static final String SETTLE_FUNCTION_ADDRESS = "0xb5f088849def11b2c3dd5516f3ebe9b7d88577a9992312a1681e5021c02405f1";
+    private static final String GAS_STATION_FEE_PAYER = "0xdc3e55061387e520650f963d6f207095887dc17cbda46077d48f6f954a083fe3";
 
     private Ed25519Account testAccount;
     private AptosClient gasStationClient;
@@ -176,8 +177,6 @@ public class GasStationTest {
 
         // Sign with the fee payer salt
         byte[] feePayerTxnBytes = feePayerTxn.bcsToBytes();
-        System.out.println("   FeePayerRawTransaction bytes length: " + feePayerTxnBytes.length);
-        System.out.println("   First 20 bytes of FeePayerRawTransaction: " + java.util.Arrays.toString(java.util.Arrays.copyOfRange(feePayerTxnBytes, 0, 20)));
         byte[] domain = "APTOS::RawTransactionWithData".getBytes();
         byte[] prefixHash = com.aptoslabs.japtos.utils.CryptoUtils.sha3_256(domain);
         byte[] signingMessage = new byte[prefixHash.length + feePayerTxnBytes.length];
@@ -197,6 +196,7 @@ public class GasStationTest {
         System.out.println("   Submitting transaction to gas station...");
         try {
             var pending = gasStationClient.submitTransaction(signed);
+
             assertNotNull(pending);
             System.out.println("   Transaction submitted with hash: " + pending.getHash());
 

@@ -71,12 +71,7 @@ public class RawTransactionWithFeePayer implements Serializable {
         try {
             Serializer serializer = new Serializer();
             serialize(serializer);
-            byte[] bytes = serializer.toByteArray();
-            System.out.println("Serialized bytes length: " + bytes.length);
-            if (bytes.length > 0) {
-                System.out.println("First 20 bytes: " + java.util.Arrays.toString(java.util.Arrays.copyOfRange(bytes, 0, 20)));
-            }
-            return bytes;
+            return serializer.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("Serialization failed", e);
         }

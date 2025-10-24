@@ -141,8 +141,11 @@ public class SignedTransaction implements Serializable {
             return new Ed25519Authenticator(ed25519Auth.getPublicKey(), ed25519Auth.getSignature());
         } else if (authenticator instanceof TransactionAuthenticatorMultiEd25519 multiAuth) {
             return new MultiEd25519Authenticator(multiAuth.getPublicKeys(), multiAuth.getSignature(), multiAuth.getThreshold());
+        } else if (authenticator instanceof TransactionAuthenticatorSingleSender singleSenderAuth) {
+            // Return the inner AccountAuthenticator (e.g., MultiKeyAuthenticator)
+            return singleSenderAuth.getSenderAuthenticator();
         } else {
-            throw new IllegalStateException("Unknown authenticator type");
+            throw new IllegalStateException("Unknown authenticator type: " + authenticator.getClass().getName());
         }
     }
 
