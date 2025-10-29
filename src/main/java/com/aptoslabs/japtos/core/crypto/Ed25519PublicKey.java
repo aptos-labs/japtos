@@ -99,6 +99,31 @@ public class Ed25519PublicKey implements PublicKey {
         byte[] bytes = HexUtils.hexToBytes(hex);
         return fromBytes(bytes);
     }
+    
+    /**
+     * Deserializes an Ed25519PublicKey from a deserializer.
+     * Reads exactly 32 bytes without a length prefix.
+     *
+     * @param deserializer the deserializer to read from
+     * @return the deserialized Ed25519PublicKey
+     * @throws java.io.IOException if deserialization fails
+     */
+    public static Ed25519PublicKey deserialize(com.aptoslabs.japtos.bcs.Deserializer deserializer) 
+            throws java.io.IOException {
+        byte[] bytes = deserializer.deserializeFixedBytes(LENGTH);
+        return fromBytes(bytes);
+    }
+    
+    /**
+     * Serializes this Ed25519PublicKey to the provided serializer.
+     * Writes the key bytes with a length prefix (BCS format).
+     *
+     * @param serializer the serializer to write to
+     * @throws java.io.IOException if serialization fails
+     */
+    public void serialize(com.aptoslabs.japtos.bcs.Serializer serializer) throws java.io.IOException {
+        serializer.serializeBytes(key);
+    }
 
     @Override
     public byte[] toBytes() {

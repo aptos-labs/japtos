@@ -27,5 +27,9 @@ public class TransactionAuthenticatorSingleSender implements Serializable {
         // Then write the embedded AccountAuthenticator (e.g., MultiKey)
         senderAuthenticator.serialize(serializer);
     }
+
+    public AccountAuthenticator getSenderAuthenticator() {
+        return senderAuthenticator;
+    }
 }
 

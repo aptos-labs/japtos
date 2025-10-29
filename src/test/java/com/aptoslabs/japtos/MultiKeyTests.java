@@ -210,7 +210,7 @@ public class MultiKeyTests {
 
         // Set up the multi-signature configuration
         // We have 3 public keys but only 1 signer (account1)
-        List<Account> signers = Arrays.asList(account1);
+        List<Account> signers = List.of(account1);
         List<Ed25519PublicKey> publicKeys = Arrays.asList(
                 account1.getPublicKey(),
                 account2.getPublicKey(),
@@ -429,7 +429,7 @@ public class MultiKeyTests {
 
         // Create the multi-key setup
         // Use account1 as the signer since its public key matches the first public key in our list
-        List<Account> signers = Arrays.asList(account1);
+        List<Account> signers = List.of(account1);
         List<Ed25519PublicKey> publicKeys = Arrays.asList(publicKey1, publicKey2, publicKey3);
         int threshold = 1;
 
@@ -582,7 +582,7 @@ public class MultiKeyTests {
         // Create multi-key account using only account1 as signer
         // The method should automatically find that account1's public key is at index 1
         MultiEd25519Account multiAccount = MultiEd25519Account.from(
-                Arrays.asList(account1),  // Only account1 is signing
+                List.of(account1),  // Only account1 is signing
                 publicKeys,               // Public keys in different order
                 1                         // Threshold 1
         );
@@ -603,11 +603,11 @@ public class MultiKeyTests {
                 new EntryFunctionPayload(
                         new ModuleId(AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"), new Identifier("coin")),
                         new Identifier("transfer"),
-                        Arrays.asList(new TypeTag.Struct(new StructTag(
+                        List.of(new TypeTag.Struct(new StructTag(
                                 AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
                                 new Identifier("aptos_coin"),
                                 new Identifier("AptosCoin"),
-                                Arrays.asList()
+                                List.of()
                         ))),
                         Arrays.asList(
                                 new TransactionArgument.AccountAddress(AccountAddress.fromHex("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")),
@@ -616,14 +616,14 @@ public class MultiKeyTests {
                 ),
                 1000L,
                 1L,
-                (long) System.currentTimeMillis() / 1000 + 600,
+                System.currentTimeMillis() / 1000 + 600,
                 1L  // chainId
         );
 
         // Sign the transaction
         AccountAuthenticator authenticator = multiAccount.signTransactionWithAuthenticator(transaction);
         assertNotNull(authenticator);
-        assertTrue(authenticator instanceof MultiEd25519Authenticator);
+        assertInstanceOf(MultiEd25519Authenticator.class, authenticator);
 
         MultiEd25519Authenticator multiAuth = (MultiEd25519Authenticator) authenticator;
         assertEquals(publicKeys, multiAuth.getPublicKeys());

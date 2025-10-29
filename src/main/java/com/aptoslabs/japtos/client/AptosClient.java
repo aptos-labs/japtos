@@ -4,6 +4,7 @@ import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.dto.*;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
+import com.aptoslabs.japtos.transaction.TransactionSubmitter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -29,6 +30,7 @@ import java.util.Map;
 public class AptosClient {
     private final AptosConfig config;
     private final Gson gson;
+    private final TransactionSubmitter transactionSubmitter;
 
     /**
      * Constructs a new AptosClient with the specified configuration.
@@ -38,6 +40,7 @@ public class AptosClient {
     public AptosClient(AptosConfig config) {
         this.config = config;
         this.gson = new GsonBuilder().create();
+        this.transactionSubmitter = config.getTransactionSubmitter();
     }
 
     /**
@@ -99,12 +102,20 @@ public class AptosClient {
 
     /**
      * Submits a signed transaction to the Aptos blockchain.
+     * If a pluggable TransactionSubmitter is configured, it will be used.
+     * Otherwise, the transaction is submitted to the default fullnode endpoint.
      *
      * @param signedTransaction the complete signed transaction to submit
      * @return a pending transaction object containing the transaction hash
      * @throws Exception if the transaction submission fails
      */
     public PendingTransaction submitTransaction(SignedTransaction signedTransaction) throws Exception {
+        // If a custom transaction submitter is configured (e.g., gas station), use it
+        if (transactionSubmitter != null) {
+            return transactionSubmitter.submitTransaction(signedTransaction);
+        }
+
+        // Otherwise, use the default submission to the fullnode
         String url = config.getFullnode() + "/v1/transactions";
         Map<String, String> headers = getDefaultHeaders();
         headers.put("Content-Type", "application/x.aptos.signed_transaction+bcs");

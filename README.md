@@ -130,7 +130,7 @@ import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 
 // Create account from existing private key
 Ed25519PrivateKey privateKey = Ed25519PrivateKey.fromHex("your_private_key_hex");
-        Ed25519Account account = new Ed25519Account(privateKey, null);
+Ed25519Account account = new Ed25519Account(privateKey, null);
 ```
 
 ### 🌱 Hierarchical Deterministic Wallets
@@ -142,8 +142,8 @@ import com.aptoslabs.japtos.account.Account;
 
 // Derive account using BIP44 path
 String mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        String derivationPath = "m/44'/637'/0'/0'/0'";  // Aptos coin type: 637
-        Ed25519Account account = Account.fromDerivationPath(derivationPath, mnemonic);
+String derivationPath = "m/44'/637'/0'/0'/0'";  // Aptos coin type: 637
+Ed25519Account account = Account.fromDerivationPath(derivationPath, mnemonic);
 ```
 
 **Convert entropy to mnemonic:**
@@ -153,7 +153,7 @@ import com.aptoslabs.japtos.utils.Bip39Utils;
 
 // Convert UUID/entropy to mnemonic phrase
 String entropy = "9b4c9e83-a06e-4704-bc5f-b6a55d0dbb89";
-        String mnemonic = Bip39Utils.entropyToMnemonic(entropy);
+String mnemonic = Bip39Utils.entropyToMnemonic(entropy);
 // Result: "defense balance boat index fatal book remain champion cushion city escape huge"
 ```
 
@@ -167,14 +167,14 @@ import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 
 // Create two accounts
 Ed25519Account account1 = Ed25519Account.generate();
-        Ed25519Account account2 = Ed25519Account.generate();
+Ed25519Account account2 = Ed25519Account.generate();
 
-        // Create multi-signature account (1-of-2 threshold)
-        List<Ed25519PrivateKey> privateKeys = Arrays.asList(
-                account1.getPrivateKey(),
-                account2.getPrivateKey()
-        );
-        MultiEd25519Account multiAccount = MultiEd25519Account.fromPrivateKeys(privateKeys, 1);
+// Create multi-signature account (1-of-2 threshold)
+List<Ed25519PrivateKey> privateKeys = Arrays.asList(
+    account1.getPrivateKey(),
+    account2.getPrivateKey()
+);
+MultiEd25519Account multiAccount = MultiEd25519Account.fromPrivateKeys(privateKeys, 1);
 ```
 
 **Create multi-signature with specific public keys:**
@@ -190,6 +190,28 @@ List<Ed25519PublicKey> publicKeys = Arrays.asList(
 MultiEd25519Account multiAccount = MultiEd25519Account.from(signers, publicKeys, 1);
 ```
 
+**MultiKey with mixed key types (Ed25519 + Keyless):**
+
+```java
+import com.aptoslabs.japtos.account.MultiKeyAccount;
+import com.aptoslabs.japtos.core.crypto.KeylessPublicKey;
+import com.aptoslabs.japtos.core.crypto.PublicKey;
+
+// Keyless public key from OAuth/passkey authentication
+String keylessHex = "1b68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d20...";
+KeylessPublicKey keylessKey = KeylessPublicKey.fromHexString(keylessHex);
+
+// Traditional Ed25519 account
+Ed25519Account passWallet = Ed25519Account.generate();
+
+// Create MultiKey with mixed types (threshold 1-of-2)
+List<PublicKey> publicKeys = Arrays.asList(keylessKey, passWallet.getPublicKey());
+List<Account> signers = Arrays.asList(passWallet);
+MultiKeyAccount multiKey = MultiKeyAccount.fromPublicKeysAndSigners(publicKeys, signers, 1);
+
+System.out.println("MultiKey address: " + multiKey.getAccountAddress());
+```
+
 ### 💰 Transaction Management
 
 **Simple APT transfer:**
@@ -201,36 +223,36 @@ import com.aptoslabs.japtos.types.*;
 
 // Build transfer payload
 ModuleId moduleId = new ModuleId(
-        AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-        new Identifier("coin")
+    AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
+    new Identifier("coin")
 );
-        TransactionPayload payload = new EntryFunctionPayload(
-                moduleId,
-                new Identifier("transfer"),
-                Arrays.asList(new TypeTag.Struct(new StructTag(
-                        AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-                        new Identifier("aptos_coin"),
-                        new Identifier("AptosCoin"),
-                        Arrays.asList()
-                ))),
-                Arrays.asList(
-                        new TransactionArgument.AccountAddress(recipientAddress),
-                        new TransactionArgument.U64(1000000L)  // 1 APT
-                )
-        );
+TransactionPayload payload = new EntryFunctionPayload(
+    moduleId,
+    new Identifier("transfer"),
+    Arrays.asList(new TypeTag.Struct(new StructTag(
+        AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
+        new Identifier("aptos_coin"),
+        new Identifier("AptosCoin"),
+        Arrays.asList()
+    ))),
+    Arrays.asList(
+        new TransactionArgument.AccountAddress(recipientAddress),
+        new TransactionArgument.U64(1000000L)  // 1 APT
+    )
+);
 
-        // Build and sign transaction
-        RawTransaction rawTx = new RawTransaction(
-                account.getAccountAddress(),
-                sequenceNumber,
-                payload,
-                1000000L,  // maxGasAmount
-                100L,      // gasUnitPrice
-                System.currentTimeMillis() / 1000 + 3600,  // expiration
-                chainId
-        );
+// Build and sign transaction
+RawTransaction rawTx = new RawTransaction(
+    account.getAccountAddress(),
+    sequenceNumber,
+    payload,
+    1000000L,  // maxGasAmount
+    100L,      // gasUnitPrice
+    System.currentTimeMillis() / 1000 + 3600,  // expiration
+    chainId
+);
 
-        SignedTransaction signedTx = new SignedTransaction(rawTx, account.signTransactionWithAuthenticator(rawTx));
+SignedTransaction signedTx = new SignedTransaction(rawTx, account.signTransactionWithAuthenticator(rawTx));
 ```
 
 **Submit and wait for transaction:**
@@ -346,6 +368,77 @@ mvn test -Dtest=MultiKeyTests#testMultikeyPathDerivation
 
 - `AptosClient`: Main client for API interactions
 - `HttpClient`: HTTP client interface
+
+### ⛽ Gas Station (Sponsored Transactions)
+
+The SDK supports gas-sponsored transactions where a third party pays for transaction fees. This is useful for onboarding users without requiring them to hold APT for gas.
+
+**Setup:**
+
+```java
+import com.aptoslabs.japtos.gasstation.*;
+
+// Option 1: Using GasStationSettings with AptosConfig
+GasStationSettings settings = GasStationSettings.builder()
+    .apiKey("your_api_key_here")
+    .endpoint("https://gas-station.testnet.aptoslabs.com")
+    .build();
+
+AptosConfig config = AptosConfig.builder()
+    .network(AptosConfig.Network.TESTNET)
+    .plugin(settings)
+    .build();
+
+// Option 2: Direct client creation
+GasStationClientOptions options = new GasStationClientOptions.Builder()
+    .network(AptosConfig.Network.TESTNET)
+    .apiKey("your_api_key_here")
+    .build();
+
+AccountAddress feePayerAddress = AccountAddress.fromHex("0x...");
+GasStationTransactionSubmitter gasStation = new GasStationTransactionSubmitter(options, feePayerAddress);
+
+AptosConfig config = AptosConfig.builder()
+    .network(AptosConfig.Network.TESTNET)
+    .transactionSubmitter(gasStation)
+    .build();
+
+AptosClient client = new AptosClient(config);
+```
+
+**Signing for fee payer transactions:**
+
+When using gas station, you must sign with the fee payer context:
+
+```java
+// Build your transaction
+RawTransaction rawTx = new RawTransaction(...);
+
+// Create FeePayerRawTransaction for signing
+FeePayerRawTransaction feePayerTxn = new FeePayerRawTransaction(
+    rawTx,
+    List.of(), // secondary signers
+    feePayerAddress
+);
+
+// Sign with fee payer salt
+byte[] feePayerBytes = feePayerTxn.bcsToBytes();
+byte[] domain = "APTOS::RawTransactionWithData".getBytes();
+byte[] prefixHash = CryptoUtils.sha3_256(domain);
+byte[] signingMessage = new byte[prefixHash.length + feePayerBytes.length];
+System.arraycopy(prefixHash, 0, signingMessage, 0, prefixHash.length);
+System.arraycopy(feePayerBytes, 0, signingMessage, prefixHash.length, feePayerBytes.length);
+
+// Sign and create transaction
+Signature signature = account.sign(signingMessage);
+AccountAuthenticator auth = new Ed25519Authenticator(account.getPublicKey(), signature);
+SignedTransaction signedTx = new SignedTransaction(rawTx, auth);
+
+// Submit - gas will be paid by the sponsor
+PendingTransaction pending = client.submitTransaction(signedTx);
+```
+
+The transaction will be submitted with the fee payer covering gas costs. Your account's APT balance remains unchanged.
 
 ## 🤝 Contributing
 

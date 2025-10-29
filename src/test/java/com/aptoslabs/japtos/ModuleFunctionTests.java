@@ -24,11 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ModuleFunctionTests {
+    private final AptosConfig.Network network = AptosConfig.Network.LOCALNET;
     private AptosClient client;
     private Ed25519Account sender;
     private Ed25519Account recipient;
     private AptosConfig config;
-    private AptosConfig.Network network = AptosConfig.Network.LOCALNET;
 
     @BeforeAll
     void setup() throws IOException {

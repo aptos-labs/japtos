@@ -22,17 +22,15 @@ class AndroidMultikeyValidationTest {
 
 
         Account passGenerationWallet = Account.fromDerivationPath("m/44'/637'/0'/0'/0'", mnemonic);
-        ;
 
         Ed25519PublicKey systemWalletPublicKey = Ed25519PublicKey.fromHex("0x1d1261e01b8112ffb6908c76253460e4920b022ae299a0bc7024281bcc1ce061");
-        ;
 
 
         // Set up the multi-signature configuration (1-of-2)
-        List<Account> signers = Arrays.asList(passGenerationWallet);
+        List<Account> signers = List.of(passGenerationWallet);
         List<Ed25519PublicKey> publicKeys = Arrays.asList(
                 (Ed25519PublicKey) passGenerationWallet.getPublicKey(),
-                (Ed25519PublicKey) systemWalletPublicKey                                        // Second: systemPublicKey (like TypeScript SDK)
+                systemWalletPublicKey                                        // Second: systemPublicKey (like TypeScript SDK)
         );
 
         int threshold = 1;

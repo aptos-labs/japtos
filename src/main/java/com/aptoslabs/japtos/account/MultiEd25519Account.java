@@ -64,8 +64,7 @@ public class MultiEd25519Account extends Account {
         List<Integer> signerIndices = new ArrayList<>();
 
         for (Account signer : signers) {
-            if (signer instanceof Ed25519Account) {
-                Ed25519Account ed25519Account = (Ed25519Account) signer;
+            if (signer instanceof Ed25519Account ed25519Account) {
                 Ed25519PublicKey signerPublicKey = ed25519Account.getPublicKey();
 
                 // Find the index of this signer's public key in the publicKeys array

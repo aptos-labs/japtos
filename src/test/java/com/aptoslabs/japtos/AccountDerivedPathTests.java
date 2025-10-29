@@ -111,8 +111,8 @@ class AccountDerivedPathTests {
         assertEquals(EXPECTED_PUBLIC_KEY, publicKey.toString(),
                 "Derived public key should match expected value");
 
-        System.out.println("Private key: " + privateKey.toString());
-        System.out.println("Public key:  " + publicKey.toString());
+        System.out.println("Private key: " + privateKey);
+        System.out.println("Public key:  " + publicKey);
         System.out.println("✓ Direct private key derivation test passed!");
     }
 

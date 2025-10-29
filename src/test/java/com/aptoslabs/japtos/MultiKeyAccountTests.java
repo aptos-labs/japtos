@@ -61,7 +61,7 @@ public class MultiKeyAccountTests {
         System.out.println("   Account 2: " + account2.getAccountAddress());
 
         // Set up the multi-signature configuration (1-of-2)
-        List<Account> signers = Arrays.asList(account1);
+        List<Account> signers = List.of(account1);
         List<Ed25519PublicKey> publicKeys = Arrays.asList(
                 account1.getPublicKey(),
                 account2.getPublicKey()
@@ -168,7 +168,7 @@ public class MultiKeyAccountTests {
         System.out.println("   Account 2: " + account2.getAccountAddress());
 
         // Set up the multi-signature configuration (1-of-2)
-        List<Account> signers = Arrays.asList(account1);
+        List<Account> signers = List.of(account1);
         List<Ed25519PublicKey> publicKeys = Arrays.asList(
                 account1.getPublicKey(),
                 account2.getPublicKey()

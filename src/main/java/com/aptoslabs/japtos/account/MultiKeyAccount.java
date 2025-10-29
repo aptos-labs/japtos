@@ -3,8 +3,10 @@ package com.aptoslabs.japtos.account;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.core.AuthenticationKey;
+import com.aptoslabs.japtos.core.crypto.AnyPublicKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
+import com.aptoslabs.japtos.core.crypto.PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.transaction.RawTransaction;
 import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
@@ -17,15 +19,16 @@ import java.util.List;
 /**
  * MultiKey account implementation that matches TypeScript SDK's MultiKeyAccount.
  * This uses authentication scheme 3 (MultiKey) and BCS serialization.
+ * Supports mixed key types (Ed25519, Keyless, etc.) via AnyPublicKey wrapper.
  */
 public class MultiKeyAccount extends Account {
     private final List<Ed25519PrivateKey> privateKeys;
-    private final List<Ed25519PublicKey> publicKeys;
+    private final List<PublicKey> publicKeys;
     private final int threshold;
     private final AccountAddress accountAddress;
     private final List<Integer> signerIndices;
 
-    private MultiKeyAccount(List<Ed25519PrivateKey> privateKeys, List<Ed25519PublicKey> publicKeys, int threshold, List<Integer> signerIndices) {
+    private MultiKeyAccount(List<Ed25519PrivateKey> privateKeys, List<PublicKey> publicKeys, int threshold, List<Integer> signerIndices) {
         this.privateKeys = privateKeys;
         this.publicKeys = publicKeys;
         this.threshold = threshold;
@@ -34,7 +37,7 @@ public class MultiKeyAccount extends Account {
     }
 
     public static MultiKeyAccount fromPrivateKeys(List<Ed25519PrivateKey> privateKeys, int threshold) {
-        List<Ed25519PublicKey> publicKeys = new ArrayList<>();
+        List<PublicKey> publicKeys = new ArrayList<>();
         for (Ed25519PrivateKey privateKey : privateKeys) {
             publicKeys.add(privateKey.publicKey());
         }
@@ -47,6 +50,25 @@ public class MultiKeyAccount extends Account {
     }
 
     public static MultiKeyAccount from(List<Account> signers, List<Ed25519PublicKey> publicKeys, int threshold) {
+        // Convert Ed25519PublicKey list to PublicKey list for compatibility
+        List<PublicKey> genericPublicKeys = new ArrayList<>(publicKeys);
+        return fromPublicKeysAndSigners(genericPublicKeys, signers, threshold);
+    }
+
+    /**
+     * Creates a MultiKeyAccount from public keys and signers (supports mixed key types).
+     * Matches TypeScript SDK's fromPublicKeysAndSigners method.
+     *
+     * @param publicKeys list of public keys (can be Ed25519, Keyless, etc.)
+     * @param signers list of signers (only Ed25519Account supported for signing)
+     * @param threshold minimum signatures required
+     * @return MultiKeyAccount instance
+     */
+    public static MultiKeyAccount fromPublicKeysAndSigners(
+            List<PublicKey> publicKeys, 
+            List<Account> signers, 
+            int threshold) {
+        
         // Validate inputs
         if (signers == null || publicKeys == null) {
             throw new IllegalArgumentException("Signers and public keys cannot be null");
@@ -60,41 +82,39 @@ public class MultiKeyAccount extends Account {
         if (publicKeys.size() == 0) {
             throw new IllegalArgumentException("At least one public key is required");
         }
-
-        // Extract private keys and find their indices in the public keys array
+        
+        // Extract private keys and find their indices
         List<Ed25519PrivateKey> privateKeys = new ArrayList<>();
         List<Integer> signerIndices = new ArrayList<>();
-
+        
         for (Account signer : signers) {
-            if (signer instanceof Ed25519Account) {
-                Ed25519Account ed25519Account = (Ed25519Account) signer;
-                Ed25519PublicKey signerPublicKey = ed25519Account.getPublicKey();
-
+            if (signer instanceof Ed25519Account ed25519Account) {
+                PublicKey signerPublicKey = ed25519Account.getPublicKey();
+                
                 // Find the index of this signer's public key in the publicKeys array
-                int index = findPublicKeyIndex(signerPublicKey, publicKeys);
+                int index = findPublicKeyIndexGeneric(signerPublicKey, publicKeys);
                 if (index == -1) {
                     throw new IllegalArgumentException(
-                            "Signer's public key " + signerPublicKey.toString() +
-                                    " not found in the provided public keys array"
+                        "Signer's public key " + signerPublicKey.toString() +
+                        " not found in the provided public keys array"
                     );
                 }
-
+                
                 privateKeys.add(ed25519Account.getPrivateKey());
                 signerIndices.add(index);
             } else {
                 throw new IllegalArgumentException("All signers must be Ed25519Account instances");
             }
         }
-
-        // Sort signers by their indices (ascending order) - this is critical for proper signing
+        
+        // Sort signers by their indices (ascending order)
         List<Object[]> signersAndIndices = new ArrayList<>();
         for (int i = 0; i < privateKeys.size(); i++) {
             signersAndIndices.add(new Object[]{privateKeys.get(i), signerIndices.get(i)});
         }
-
-        // Sort by index (ascending)
+        
         signersAndIndices.sort((a, b) -> Integer.compare((Integer) a[1], (Integer) b[1]));
-
+        
         // Extract sorted private keys and indices
         List<Ed25519PrivateKey> sortedPrivateKeys = new ArrayList<>();
         List<Integer> sortedSignerIndices = new ArrayList<>();
@@ -102,7 +122,7 @@ public class MultiKeyAccount extends Account {
             sortedPrivateKeys.add((Ed25519PrivateKey) pair[0]);
             sortedSignerIndices.add((Integer) pair[1]);
         }
-
+        
         return new MultiKeyAccount(sortedPrivateKeys, publicKeys, threshold, sortedSignerIndices);
     }
 
@@ -121,11 +141,33 @@ public class MultiKeyAccount extends Account {
         }
         return -1;
     }
+    
+    /**
+     * Finds the index of a public key in a generic public keys array.
+     *
+     * @param targetKey  the public key to find
+     * @param publicKeys the array of public keys to search in
+     * @return the index of the target key, or -1 if not found
+     */
+    private static int findPublicKeyIndexGeneric(PublicKey targetKey, List<PublicKey> publicKeys) {
+        for (int i = 0; i < publicKeys.size(); i++) {
+            if (publicKeys.get(i).toString().equals(targetKey.toString())) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     @Override
     public Ed25519PublicKey getPublicKey() {
-        // Return the first public key as the primary one
-        return publicKeys.get(0);
+        // Return the first Ed25519 public key found
+        for (PublicKey pk : publicKeys) {
+            if (pk instanceof Ed25519PublicKey) {
+                return (Ed25519PublicKey) pk;
+            }
+        }
+        // If no Ed25519 key found, throw exception
+        throw new IllegalStateException("No Ed25519PublicKey found in MultiKeyAccount");
     }
 
     @Override
@@ -174,17 +216,17 @@ public class MultiKeyAccount extends Account {
         // Derive auth key for MultiKey using BCS serialization (matching TypeScript SDK)
         // MultiKey serializes as: vector<AnyPublicKey> + u8 threshold
         // AnyPublicKey serializes as: uleb128(variant) + public_key_bytes
-        // For Ed25519: variant=0, so it's: 0x00 + 32 bytes
 
         try {
             // Create BCS serializer
             Serializer serializer = new Serializer();
 
-            // Serialize vector of public keys
+            // Serialize vector of public keys as AnyPublicKey
             serializer.serializeU32AsUleb128(publicKeys.size()); // Vector length
-            for (Ed25519PublicKey pk : publicKeys) {
-                serializer.serializeU32AsUleb128(0); // Ed25519 variant = 0
-                serializer.serializeBytes(pk.toBytes()); // 32 bytes
+            for (PublicKey pk : publicKeys) {
+                // Wrap in AnyPublicKey and serialize
+                AnyPublicKey anyPk = new AnyPublicKey(pk);
+                anyPk.serialize(serializer);
             }
 
             // Serialize threshold
@@ -206,7 +248,7 @@ public class MultiKeyAccount extends Account {
         return privateKeys;
     }
 
-    public List<Ed25519PublicKey> getPublicKeys() {
+    public List<PublicKey> getPublicKeys() {
         return publicKeys;
     }
 
