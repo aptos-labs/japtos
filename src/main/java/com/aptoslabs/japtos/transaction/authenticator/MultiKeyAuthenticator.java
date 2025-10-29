@@ -1,7 +1,9 @@
 package com.aptoslabs.japtos.transaction.authenticator;
 
 import com.aptoslabs.japtos.bcs.Serializer;
+import com.aptoslabs.japtos.core.crypto.AnyPublicKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
+import com.aptoslabs.japtos.core.crypto.PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
 
 import java.io.IOException;
@@ -21,7 +23,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
     private static final int AUTHENTICATOR_VARIANT_MULTIKEY = 3;
     private static final int BITMAP_LEN = 4; // 32 bits = 4 bytes
 
-    private final List<Ed25519PublicKey> publicKeys;
+    private final List<PublicKey> publicKeys;
     private final List<Signature> signatures;
     private final int threshold;
     private final List<Integer> signerIndices;
@@ -34,7 +36,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
      * @param threshold     The minimum number of signatures required
      * @param signerIndices The indices of the signers who signed
      */
-    public MultiKeyAuthenticator(List<Ed25519PublicKey> publicKeys, List<Signature> signatures,
+    public MultiKeyAuthenticator(List<PublicKey> publicKeys, List<Signature> signatures,
                                  int threshold, List<Integer> signerIndices) {
         this.publicKeys = publicKeys;
         this.signatures = signatures;
@@ -46,7 +48,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
      * Creates a new MultiKeyAuthenticator with a single signature.
      * This is a convenience constructor for the common case of signing with one key.
      */
-    public MultiKeyAuthenticator(List<Ed25519PublicKey> publicKeys, Signature signature,
+    public MultiKeyAuthenticator(List<PublicKey> publicKeys, Signature signature,
                                  int threshold, List<Integer> signerIndices) {
         this.publicKeys = publicKeys;
         this.signatures = new ArrayList<>();
@@ -62,11 +64,10 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
 
         // Serialize MultiKeyPublicKey: vector<AnyPublicKey> + u8 threshold
         serializer.serializeU32AsUleb128(publicKeys.size());
-        for (Ed25519PublicKey pk : publicKeys) {
-            // AnyPublicKey variant for Ed25519 is 0 (ULEB128)
-            serializer.serializeU32AsUleb128(0);
-            // Ed25519PublicKey.serialize => serializeBytes(bytes)
-            serializer.serializeBytes(pk.toBytes());
+        for (PublicKey pk : publicKeys) {
+            // Wrap in AnyPublicKey and serialize
+            AnyPublicKey anyPk = new AnyPublicKey(pk);
+            anyPk.serialize(serializer);
         }
         serializer.serializeU8((byte) threshold);
 
@@ -107,7 +108,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
         return bitmap;
     }
 
-    public List<Ed25519PublicKey> getPublicKeys() {
+    public List<PublicKey> getPublicKeys() {
         return publicKeys;
     }
 
@@ -134,14 +135,16 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
     @Override
     public byte[] getPublicKey() {
         // Return serialized representation of all public keys
-        byte[] result = new byte[publicKeys.size() * 32];
-        int offset = 0;
-        for (Ed25519PublicKey pk : publicKeys) {
-            byte[] pkBytes = pk.toBytes();
-            System.arraycopy(pkBytes, 0, result, offset, 32);
-            offset += 32;
+        try {
+            Serializer serializer = new Serializer();
+            for (PublicKey pk : publicKeys) {
+                AnyPublicKey anyPk = new AnyPublicKey(pk);
+                anyPk.serialize(serializer);
+            }
+            return serializer.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to serialize public keys", e);
         }
-        return result;
     }
 
     @Override

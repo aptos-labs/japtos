@@ -142,7 +142,7 @@ public class Serializer {
      * @throws IOException if writing to the buffer fails
      */
     public void serializeString(String str) throws IOException {
-        serializeBytes(str.getBytes());
+        serializeBytes(str.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**

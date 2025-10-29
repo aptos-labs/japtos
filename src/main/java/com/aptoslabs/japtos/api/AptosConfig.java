@@ -3,10 +3,12 @@ package com.aptoslabs.japtos.api;
 import com.aptoslabs.japtos.client.HttpClient;
 import com.aptoslabs.japtos.client.HttpClientImpl;
 import com.aptoslabs.japtos.client.dto.HttpResponse;
+import com.aptoslabs.japtos.plugin.PluginSettings;
 import com.aptoslabs.japtos.transaction.TransactionSubmitter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Configuration for the Aptos SDK.
@@ -17,7 +19,7 @@ public class AptosConfig {
     private final String faucet;
     private final HttpClient client;
     private final Network network;
-    private final Map<String, Object> pluginSettings;
+    private final Map<String, PluginSettings> pluginSettings;
     private final TransactionSubmitter transactionSubmitter;
 
     public AptosConfig(AptosConfigBuilder builder) {
@@ -54,8 +56,39 @@ public class AptosConfig {
         return network;
     }
 
-    public Map<String, Object> getPluginSettings() {
+    /**
+     * Returns all registered plugin settings.
+     *
+     * @return immutable map of plugin name to settings
+     */
+    public Map<String, PluginSettings> getPluginSettings() {
         return pluginSettings;
+    }
+    
+    /**
+     * Gets the plugin settings for a specific plugin by name.
+     *
+     * @param pluginName the name of the plugin
+     * @return Optional containing the settings if found, empty otherwise
+     */
+    public Optional<PluginSettings> getPluginSettings(String pluginName) {
+        return Optional.ofNullable(pluginSettings.get(pluginName));
+    }
+    
+    /**
+     * Gets the plugin settings for a specific plugin by name with type casting.
+     *
+     * @param pluginName the name of the plugin
+     * @param settingsClass the expected class of the settings
+     * @param <T> the type of settings
+     * @return Optional containing the settings if found and of correct type, empty otherwise
+     */
+    public <T extends PluginSettings> Optional<T> getPluginSettings(String pluginName, Class<T> settingsClass) {
+        PluginSettings settings = pluginSettings.get(pluginName);
+        if (settings != null && settingsClass.isInstance(settings)) {
+            return Optional.of(settingsClass.cast(settings));
+        }
+        return Optional.empty();
     }
 
     public TransactionSubmitter getTransactionSubmitter() {
@@ -165,7 +198,7 @@ public class AptosConfig {
         private String faucet;
         private HttpClient client;
         private Network network;
-        private Map<String, Object> pluginSettings;
+        private Map<String, PluginSettings> pluginSettings;
         private TransactionSubmitter transactionSubmitter;
 
         public AptosConfigBuilder() {
@@ -199,8 +232,44 @@ public class AptosConfig {
             return this;
         }
 
-        public AptosConfigBuilder pluginSettings(Map<String, Object> pluginSettings) {
+        /**
+         * Sets all plugin settings at once.
+         *
+         * @param pluginSettings map of plugin name to settings
+         * @return this builder
+         */
+        public AptosConfigBuilder pluginSettings(Map<String, PluginSettings> pluginSettings) {
             this.pluginSettings = pluginSettings;
+            return this;
+        }
+        
+        /**
+         * Registers settings for a specific plugin.
+         *
+         * @param pluginName the name of the plugin
+         * @param settings the plugin settings
+         * @return this builder
+         */
+        public AptosConfigBuilder pluginSettings(String pluginName, PluginSettings settings) {
+            if (this.pluginSettings == null) {
+                this.pluginSettings = new HashMap<>();
+            }
+            this.pluginSettings.put(pluginName, settings);
+            return this;
+        }
+        
+        /**
+         * Registers settings for a plugin using the plugin's own name.
+         * The plugin name is obtained from settings.getPluginName().
+         *
+         * @param settings the plugin settings
+         * @return this builder
+         */
+        public AptosConfigBuilder plugin(PluginSettings settings) {
+            if (this.pluginSettings == null) {
+                this.pluginSettings = new HashMap<>();
+            }
+            this.pluginSettings.put(settings.getPluginName(), settings);
             return this;
         }
 
