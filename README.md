@@ -15,16 +15,6 @@ A comprehensive Java SDK for interacting with the Aptos blockchain, featuring ad
 
 ### Repository Configuration
 
-Add the GitHub Packages repository to your `pom.xml`:
-
-```xml
-<repositories>
-  <repository>
-    <id>github</id>
-    <url>https://maven.pkg.github.com/aptos-labs/japtos</url>
-  </repository>
-</repositories>
-```
 
 ### Dependency
 
@@ -32,13 +22,11 @@ Add the Japtos SDK dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-  <groupId>com.aptos-labs</groupId>
+  <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.4</version>
 </dependency>
 ```
-
-> **⚠️ Authentication Required**: This repository requires GitHub authentication. For detailed setup instructions, see the [GitHub Packages Maven Registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 
 ## 🔧 Manual Installation
 
