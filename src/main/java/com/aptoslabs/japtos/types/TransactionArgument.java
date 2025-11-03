@@ -5,12 +5,24 @@ import com.aptoslabs.japtos.bcs.Serializer;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * Represents a transaction argument.
  */
 public abstract class TransactionArgument implements Serializable {
     public abstract void serialize(Serializer serializer) throws IOException;
+    
+    /**
+     * Serializes this argument for use in entry functions.
+     * By default, this creates a new serializer and calls bcsToBytes(),
+     * but subclasses can override for custom behavior.
+     * 
+     * @return The BCS serialized bytes for entry function use
+     */
+    public byte[] serializeForEntryFunction() throws IOException {
+        return bcsToBytes();
+    }
 
     /**
      * U8 argument
@@ -26,6 +38,13 @@ public abstract class TransactionArgument implements Serializable {
         public void serialize(Serializer serializer) throws IOException {
             serializer.serializeU8((byte) 0); // U8 tag
             serializer.serializeU8(value);
+        }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            serializer.serializeU8(value);
+            return serializer.toByteArray();
         }
 
         public byte getValue() {
@@ -86,6 +105,29 @@ public abstract class TransactionArgument implements Serializable {
             System.arraycopy(bytes, 0, padded, 16 - bytes.length, bytes.length);
             serializer.serializeU128(padded);
         }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            byte[] bytes = value.toByteArray();
+            byte[] padded = new byte[16];
+            if (bytes[0] < 0) {
+                // Handle negative sign extension for positive BigIntegers
+                Arrays.fill(padded, (byte) 0);
+            }
+            int srcPos = Math.max(0, bytes.length - 16);
+            int destPos = Math.max(0, 16 - bytes.length);
+            int length = Math.min(bytes.length, 16);
+            System.arraycopy(bytes, srcPos, padded, destPos, length);
+            
+            // Convert to little-endian
+            byte[] littleEndian = new byte[16];
+            for (int i = 0; i < 16; i++) {
+                littleEndian[i] = padded[15 - i];
+            }
+            serializer.serializeU128(littleEndian);
+            return serializer.toByteArray();
+        }
 
         public BigInteger getValue() {
             return value;
@@ -137,6 +179,13 @@ public abstract class TransactionArgument implements Serializable {
             serializer.serializeU8((byte) 4); // U8Vector tag
             serializer.serializeBytes(value);
         }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            serializer.serializeBytes(value);
+            return serializer.toByteArray();
+        }
 
         public byte[] getValue() {
             return value;
@@ -157,6 +206,13 @@ public abstract class TransactionArgument implements Serializable {
         public void serialize(Serializer serializer) throws IOException {
             serializer.serializeU8((byte) 5); // Bool tag
             serializer.serializeBool(value);
+        }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            serializer.serializeBool(value);
+            return serializer.toByteArray();
         }
 
         public boolean getValue() {
@@ -179,6 +235,13 @@ public abstract class TransactionArgument implements Serializable {
             serializer.serializeU8((byte) 6); // U16 tag
             serializer.serializeU16(value);
         }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            serializer.serializeU16(value);
+            return serializer.toByteArray();
+        }
 
         public short getValue() {
             return value;
@@ -199,6 +262,13 @@ public abstract class TransactionArgument implements Serializable {
         public void serialize(Serializer serializer) throws IOException {
             serializer.serializeU8((byte) 7); // U32 tag
             serializer.serializeU32(value);
+        }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            serializer.serializeU32(value);
+            return serializer.toByteArray();
         }
 
         public int getValue() {
@@ -229,6 +299,29 @@ public abstract class TransactionArgument implements Serializable {
             System.arraycopy(bytes, 0, padded, 32 - bytes.length, bytes.length);
             serializer.serializeU256(padded);
         }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            byte[] bytes = value.toByteArray();
+            byte[] padded = new byte[32];
+            if (bytes[0] < 0) {
+                // Handle negative sign extension for positive BigIntegers
+                Arrays.fill(padded, (byte) 0);
+            }
+            int srcPos = Math.max(0, bytes.length - 32);
+            int destPos = Math.max(0, 32 - bytes.length);
+            int length = Math.min(bytes.length, 32);
+            System.arraycopy(bytes, srcPos, padded, destPos, length);
+            
+            // Convert to little-endian
+            byte[] littleEndian = new byte[32];
+            for (int i = 0; i < 32; i++) {
+                littleEndian[i] = padded[31 - i];
+            }
+            serializer.serializeU256(littleEndian);
+            return serializer.toByteArray();
+        }
 
         public BigInteger getValue() {
             return value;
@@ -256,6 +349,14 @@ public abstract class TransactionArgument implements Serializable {
             // Just serialize the bytes directly with uleb128 length prefix
             // This matches the correct BCS format for Move String in entry functions
             serializer.serializeBytes(value);
+        }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            // Move String serializes as length-prefixed bytes
+            Serializer serializer = new Serializer();
+            serializer.serializeBytes(value);
+            return serializer.toByteArray();
         }
 
         public byte[] getValue() {

@@ -5,7 +5,7 @@
 
   <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.4</version>
+  <version>1.1.6</version>
 
 
   <developers>
@@ -37,7 +37,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <okhttp.version>4.12.0</okhttp.version>
     <gson.version>2.10.1</gson.version>
-    <bouncycastle.version>1.77</bouncycastle.version>
+    <bouncycastle.version>1.82</bouncycastle.version>
     <slf4j.version>2.0.9</slf4j.version>
   </properties>
 
@@ -207,39 +207,8 @@
           <version>3.6.1</version>
         </plugin>
 
-<!--        &lt;!&ndash; Distribution Management &ndash;&gt;-->
-<!--        <plugin>-->
-<!--          <groupId>org.apache.maven.plugins</groupId>-->
-<!--          <artifactId>maven-deploy-plugin</artifactId>-->
-<!--          <version>3.1.1</version>-->
-<!--        </plugin>-->
-
-
-<!--        <plugin>-->
-<!--          <groupId>org.apache.maven.plugins</groupId>-->
-<!--          <artifactId>maven-gpg-plugin</artifactId>-->
-<!--          <version>3.2.4</version>-->
-<!--          <executions>-->
-<!--            <execution>-->
-<!--              <id>sign-artifacts</id>-->
-<!--              <phase>verify</phase>-->
-<!--              <goals>-->
-<!--                <goal>sign</goal>-->
-<!--              </goals>-->
-<!--            </execution>-->
-<!--          </executions>-->
-<!--        </plugin>-->
-
       </plugins>
     </pluginManagement>
   </build>
-
-<!--  <distributionManagement>-->
-<!--    <repository>-->
-<!--      <id>github</id>-->
-<!--      <name>GitHub OWNER Apache Maven Packages</name>-->
-<!--      <url>https://maven.pkg.github.com/aptos-labs/japtos</url>-->
-<!--    </repository>-->
-<!--  </distributionManagement>-->
 
 </project>
