@@ -357,6 +357,100 @@ mvn test -Dtest=MultiKeyTests#testMultikeyPathDerivation
 - `AptosClient`: Main client for API interactions
 - `HttpClient`: HTTP client interface
 
+### 🔧 Working with Move Option Types
+
+**Example Move module with optional parameters:**
+
+```move
+module example::optional_params {
+    use std::option::{Self, Option};
+    use std::string::String;
+    
+    public entry fun test_options(
+        account: &signer,
+        u64_opt: Option<u64>,
+        string_opt: Option<String>,
+        bool_opt: Option<bool>,
+        address_opt: Option<address>
+    ) {
+        // Function accepts optional parameters
+    }
+    
+    public entry fun test_mixed(
+        account: &signer,
+        required_u64: u64,
+        optional_string: Option<String>,
+        required_bool: bool,
+        optional_u64: Option<u64>
+    ) {
+        // Mix of required and optional parameters
+    }
+}
+```
+
+**Calling Move functions with optional parameters from Java:**
+
+```java
+import com.aptoslabs.japtos.types.MoveOption;
+import com.aptoslabs.japtos.types.TransactionArgument;
+
+// Example 1: All optional parameters with Some values
+List<TransactionArgument> args = Arrays.asList(
+    MoveOption.u64(12345L),                    // Some(12345)
+    MoveOption.string("hello from japtos"),     // Some("hello from japtos")
+    MoveOption.bool(true),                      // Some(true)
+    MoveOption.address(accountAddress)          // Some(0x123...)
+);
+
+// Example 2: Mix of Some and None values
+List<TransactionArgument> args = Arrays.asList(
+    MoveOption.u64(null),                       // None
+    MoveOption.string("optional value"),        // Some("optional value")
+    MoveOption.bool(null),                      // None
+    MoveOption.address(null)                    // None
+);
+
+// Example 3: Mixed required and optional parameters
+AccountAddress recipient = AccountAddress.fromHex("0x1");
+List<TransactionArgument> args = Arrays.asList(
+    new TransactionArgument.U64(456L),          // required u64
+    MoveOption.string("optional value"),        // optional string: Some("optional value")
+    new TransactionArgument.Bool(false),        // required bool
+    MoveOption.u64(null)                        // optional u64: None
+);
+
+// Build and submit transaction
+ModuleId moduleId = new ModuleId(moduleAddress, new Identifier("optional_params"));
+EntryFunctionPayload payload = new EntryFunctionPayload(
+    moduleId,
+    new Identifier("test_mixed"),
+    Collections.emptyList(),
+    args
+);
+
+// MoveOption factory methods for all types
+MoveOption.u8((byte) 1);                       // Some(1)
+MoveOption.u16((short) 100);                   // Some(100)
+MoveOption.u32(1000);                          // Some(1000)
+MoveOption.u64(10000L);                        // Some(10000)
+MoveOption.u128(BigInteger.valueOf(12345));    // Some(12345)
+MoveOption.u256(new BigInteger("999999"));     // Some(999999)
+MoveOption.bool(true);                         // Some(true)
+MoveOption.string("hello");                    // Some("hello")
+MoveOption.address(accountAddr);               // Some(address)
+MoveOption.u8Vector(new byte[]{1, 2, 3});     // Some([1,2,3])
+
+// Working with MoveOption values
+MoveOption<TransactionArgument.U64> amount = MoveOption.u64(1000L);
+if (amount.isSome()) {
+    TransactionArgument.U64 value = amount.unwrap();
+    System.out.println("Amount: " + value.getValue());
+}
+
+// Convert to Java Optional
+Optional<TransactionArgument.U64> javaOpt = amount.toOptional();
+```
+
 ### ⛽ Gas Station (Sponsored Transactions)
 
 The SDK supports gas-sponsored transactions where a third party pays for transaction fees. This is useful for onboarding users without requiring them to hold APT for gas.
