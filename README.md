@@ -24,7 +24,7 @@ Add the Japtos SDK dependency to your `pom.xml`:
 <dependency>
   <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.4</version>
+  <version>1.1.6</version>
 </dependency>
 ```
 
