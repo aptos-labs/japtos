@@ -6,6 +6,7 @@ import com.aptoslabs.japtos.bcs.Serializer;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a transaction argument.
@@ -189,6 +190,44 @@ public abstract class TransactionArgument implements Serializable {
 
         public byte[] getValue() {
             return value;
+        }
+    }
+
+    /**
+     * U64Vector argument for vector<u64> type
+     * Serializes as a uleb128 length followed by u64 values
+     */
+    public static class U64Vector extends TransactionArgument {
+        private final List<Long> values;
+
+        public U64Vector(List<Long> values) {
+            this.values = values;
+        }
+
+        @Override
+        public void serialize(Serializer serializer) throws IOException {
+            // Serialize vector length as ULEB128
+            serializer.serializeU32AsUleb128(values.size());
+            // Serialize each u64 value
+            for (Long value : values) {
+                serializer.serializeU64(value);
+            }
+        }
+        
+        @Override
+        public byte[] serializeForEntryFunction() throws IOException {
+            Serializer serializer = new Serializer();
+            // Serialize vector length as ULEB128
+            serializer.serializeU32AsUleb128(values.size());
+            // Serialize each u64 value
+            for (Long value : values) {
+                serializer.serializeU64(value);
+            }
+            return serializer.toByteArray();
+        }
+
+        public List<Long> getValue() {
+            return values;
         }
     }
 
