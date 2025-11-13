@@ -3,8 +3,10 @@ package com.aptoslabs.japtos.client;
 import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.dto.*;
 import com.aptoslabs.japtos.core.AccountAddress;
+import com.aptoslabs.japtos.core.Constants;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.transaction.TransactionSubmitter;
+import com.aptoslabs.japtos.utils.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -41,6 +43,8 @@ public class AptosClient {
         this.config = config;
         this.gson = new GsonBuilder().create();
         this.transactionSubmitter = config.getTransactionSubmitter();
+        String networkInfo = config.getNetwork() != null ? config.getNetwork().name() : "CUSTOM";
+        Logger.info("Japtos SDK v%s initialized [%s] - Support: %s", Constants.VERSION, networkInfo, Constants.GITHUB_REPO);
     }
 
     /**
@@ -159,26 +163,26 @@ public class AptosClient {
         String url = config.getFullnode() + "/v1/transactions/by_hash/" + hash + "?wait=true";
         Map<String, String> headers = getDefaultHeaders();
 
-        System.out.println("   Waiting for transaction: " + hash + " (attempt " + (attempts + 1) + ")");
-        System.out.println("   URL: " + url);
+        Logger.debug("Waiting for transaction: %s (attempt %d)", hash, attempts + 1);
+        Logger.debug("URL: %s", url);
 
         HttpResponse response = config.getClient().get(url, headers);
 
-        System.out.println("   Transaction response code: " + response.getStatusCode());
-        System.out.println("   Transaction response body: " + response.getBody());
+        Logger.debug("Transaction response code: %d", response.getStatusCode());
+        Logger.debug("Transaction response body: %s", response.getBody());
 
         if (!response.isSuccessful()) {
             throw new AptosClientException("Failed to wait for transaction: " + response.getStatusCode() + " " + response.getBody());
         }
 
         Transaction transaction = gson.fromJson(response.getBody(), Transaction.class);
-        System.out.println("   Transaction type: " + transaction.getType());
-        System.out.println("   Transaction success: " + transaction.isSuccess());
-        System.out.println("   Transaction VM status: " + transaction.getVmStatus());
+        Logger.debug("Transaction type: %s", transaction.getType());
+        Logger.debug("Transaction success: %s", transaction.isSuccess());
+        Logger.debug("Transaction VM status: %s", transaction.getVmStatus());
 
         // Check if transaction is still pending
         if ("pending_transaction".equals(transaction.getType())) {
-            System.out.println("   Transaction is still pending, waiting for it to be committed...");
+            Logger.debug("Transaction is still pending, waiting for it to be committed...");
             // Wait a bit more and try again
             Thread.sleep(2000);
             return waitForTransaction(hash, attempts + 1);
@@ -189,7 +193,7 @@ public class AptosClient {
             throw new AptosClientException("Transaction failed with VM status: " + transaction.getVmStatus());
         }
 
-        System.out.println("   Transaction committed successfully");
+        Logger.info("Transaction committed successfully");
         return transaction;
     }
 
@@ -268,6 +272,7 @@ public class AptosClient {
         try {
             amount = String.valueOf(response.getBody());
         } catch (Exception e) {
+            Logger.error("Failed to deserialize balance response", e);
             throw new AptosClientException("Failed to deserialize balance response: " + e.getMessage());
         }
         return Long.parseLong(amount);

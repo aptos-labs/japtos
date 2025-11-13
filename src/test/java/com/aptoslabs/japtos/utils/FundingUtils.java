@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.utils;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.api.AptosConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -60,8 +62,8 @@ public class FundingUtils {
                 String responseBody = response.body().string();
 
                 // Debug: Print the response for investigation
-                System.out.println("   Faucet response code: " + response.code());
-                System.out.println("   Faucet response body: " + responseBody);
+                Logger.info("   Faucet response code: " + response.code());
+                Logger.info("   Faucet response body: " + responseBody);
 
                 if (!response.isSuccessful()) {
                     throw new IOException("Failed to fund account: " + response.code() + " - " + responseBody);
@@ -75,7 +77,7 @@ public class FundingUtils {
                     var txnHashes = responseJson.getAsJsonArray("txn_hashes");
                     if (txnHashes.size() > 0) {
                         String hash = txnHashes.get(0).getAsString();
-                        System.out.println("   Extracted transaction hash from txn_hashes: " + hash);
+                        Logger.info("   Extracted transaction hash from txn_hashes: " + hash);
                         return hash;
                     }
                 }
@@ -83,7 +85,7 @@ public class FundingUtils {
                 // Fallback to hash field
                 if (responseJson.has("hash")) {
                     String hash = responseJson.get("hash").getAsString();
-                    System.out.println("   Extracted transaction hash from hash field: " + hash);
+                    Logger.info("   Extracted transaction hash from hash field: " + hash);
                     return hash;
                 }
 

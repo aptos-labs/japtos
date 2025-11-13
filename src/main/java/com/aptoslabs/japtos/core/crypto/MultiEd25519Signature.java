@@ -2,6 +2,7 @@ package com.aptoslabs.japtos.core.crypto;
 
 import com.aptoslabs.japtos.bcs.Serializable;
 import com.aptoslabs.japtos.bcs.Serializer;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -171,6 +172,7 @@ public class MultiEd25519Signature extends Signature implements Serializable {
             serialize(serializer);
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize MultiEd25519Signature", e);
             throw new RuntimeException("Failed to serialize MultiEd25519Signature", e);
         }
     }

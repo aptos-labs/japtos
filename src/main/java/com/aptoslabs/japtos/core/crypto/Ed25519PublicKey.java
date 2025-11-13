@@ -2,6 +2,7 @@ package com.aptoslabs.japtos.core.crypto;
 
 import com.aptoslabs.japtos.core.AuthenticationKey;
 import com.aptoslabs.japtos.utils.HexUtils;
+import com.aptoslabs.japtos.utils.Logger;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.crypto.signers.Ed25519Signer;
 
@@ -155,6 +156,7 @@ public class Ed25519PublicKey implements PublicKey {
             signer.update(message, 0, message.length);
             return signer.verifySignature(signature.toBytes());
         } catch (Exception e) {
+            Logger.warn("Signature verification failed", e);
             return false;
         }
     }

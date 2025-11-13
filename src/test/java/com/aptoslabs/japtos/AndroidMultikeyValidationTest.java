@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.MultiKeyAccount;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
@@ -41,8 +43,8 @@ class AndroidMultikeyValidationTest {
         String actualAddress = multi.getAccountAddress().toString();
         String expectedAddress = "0xb335cf90bf63226d39aa31cdfa8e0aff98978579721b85b01fde6ce124942ccd";
 
-        System.out.println("Final result - Expected: " + expectedAddress);
-        System.out.println("Final result - Actual: " + actualAddress);
+        Logger.info("Final result - Expected: " + expectedAddress);
+        Logger.info("Final result - Actual: " + actualAddress);
 
         assertEquals(expectedAddress, actualAddress);
     }

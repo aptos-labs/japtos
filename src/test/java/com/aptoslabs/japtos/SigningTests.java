@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.api.AptosConfig;
@@ -32,15 +34,15 @@ public class SigningTests {
         senderAccount = Account.generate();
         recipientAccount = Account.generate();
 
-        System.out.println("=== Transaction Signing Tests ===");
-        System.out.println("Sender: " + senderAccount.getAccountAddress());
-        System.out.println("Recipient: " + recipientAccount.getAccountAddress());
+        Logger.info("=== Transaction Signing Tests ===");
+        Logger.info("Sender: " + senderAccount.getAccountAddress());
+        Logger.info("Recipient: " + recipientAccount.getAccountAddress());
     }
 
     @Test
     @DisplayName("Test transaction creation and signing")
     void testTransactionCreationAndSigning() throws Exception {
-        System.out.println("\n1. Testing transaction creation and signing...");
+        Logger.info("\n1. Testing transaction creation and signing...");
 
         // Build entry function payload for 0x1::coin::transfer(recipient, amount)
         ModuleId moduleId = new ModuleId(AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"), new Identifier("coin"));
@@ -68,8 +70,8 @@ public class SigningTests {
 
         // Sign
         var sig = senderAccount.signTransaction(raw);
-        System.out.println("   Transaction signed successfully");
-        System.out.println("   Signature: " + com.aptoslabs.japtos.utils.HexUtils.bytesToHex(sig.toBytes()));
+        Logger.info("   Transaction signed successfully");
+        Logger.info("   Signature: " + com.aptoslabs.japtos.utils.HexUtils.bytesToHex(sig.toBytes()));
 
         // Create the same message that was signed: sha3("APTOS::RawTransaction") || BCS(RawTransaction)
         byte[] domain = "APTOS::RawTransaction".getBytes();
@@ -81,7 +83,7 @@ public class SigningTests {
 
         // Verify signature against the signing message (not hashed)
         boolean isValid = senderAccount.verifySignature(signingMessage, sig);
-        System.out.println("   Signature verification: " + isValid);
+        Logger.info("   Signature verification: " + isValid);
 
         assertTrue(isValid);
         assertTrue(transactionBytes.length > 0);
@@ -90,7 +92,7 @@ public class SigningTests {
     @Test
     @DisplayName("Test factory method transaction creation")
     void testFactoryMethodTransactionCreation() throws Exception {
-        System.out.println("\n2. Testing factory method transaction creation...");
+        Logger.info("\n2. Testing factory method transaction creation...");
 
         // Build entry function payload via 'create' convenience
         ModuleId coinModule = new ModuleId(
@@ -124,7 +126,7 @@ public class SigningTests {
     @Test
     @DisplayName("Test custom coin type transaction")
     void testCustomCoinTypeTransaction() throws Exception {
-        System.out.println("\n3. Testing custom coin type transaction...");
+        Logger.info("\n3. Testing custom coin type transaction...");
 
         // Create a custom coin type (simulating USDC)
         StructTag usdcType = new StructTag(
@@ -163,24 +165,24 @@ public class SigningTests {
     @Test
     @DisplayName("Test message signing and verification")
     void testMessageSigning() {
-        System.out.println("\n4. Testing message signing...");
+        Logger.info("\n4. Testing message signing...");
 
         String message = "Hello, Aptos!";
         byte[] messageBytes = message.getBytes();
 
         var signature = senderAccount.sign(messageBytes);
-        System.out.println("   Message: " + message);
-        System.out.println("   Signature: " + HexUtils.bytesToHex(signature.toBytes()));
+        Logger.info("   Message: " + message);
+        Logger.info("   Signature: " + HexUtils.bytesToHex(signature.toBytes()));
 
         boolean isValid = senderAccount.verifySignature(messageBytes, signature);
-        System.out.println("   Signature valid: " + isValid);
+        Logger.info("   Signature valid: " + isValid);
 
         assertTrue(isValid);
 
         String wrongMessage = "Wrong message";
         byte[] wrongBytes = wrongMessage.getBytes();
         boolean isInvalid = senderAccount.verifySignature(wrongBytes, signature);
-        System.out.println("   Wrong message valid: " + isInvalid);
+        Logger.info("   Wrong message valid: " + isInvalid);
 
         assertFalse(isInvalid);
     }
@@ -188,7 +190,7 @@ public class SigningTests {
     @Test
     @DisplayName("Test transaction serialization")
     void testTransactionSerialization() throws Exception {
-        System.out.println("\n5. Testing transaction serialization...");
+        Logger.info("\n5. Testing transaction serialization...");
 
         // Create a simple transfer
         TransactionPayload payload = new EntryFunctionPayload(
@@ -212,11 +214,11 @@ public class SigningTests {
         );
 
         byte[] serialized = raw.bcsToBytes();
-        System.out.println("   Serialized transaction length: " + serialized.length + " bytes");
-        System.out.println("   Serialized transaction hex: " + HexUtils.bytesToHex(serialized));
+        Logger.info("   Serialized transaction length: " + serialized.length + " bytes");
+        Logger.info("   Serialized transaction hex: " + HexUtils.bytesToHex(serialized));
 
         var sig = senderAccount.signTransaction(raw);
-        System.out.println("   Signature: " + HexUtils.bytesToHex(sig.toBytes()));
+        Logger.info("   Signature: " + HexUtils.bytesToHex(sig.toBytes()));
 
         // Create the same message that was signed: sha3("APTOS::RawTransaction") || BCS(RawTransaction)
         byte[] domain = "APTOS::RawTransaction".getBytes();
@@ -226,7 +228,7 @@ public class SigningTests {
         System.arraycopy(serialized, 0, signingMessage, prefixHash.length, serialized.length);
 
         boolean isValid = senderAccount.verifySignature(signingMessage, sig);
-        System.out.println("   Signature verification: " + isValid);
+        Logger.info("   Signature verification: " + isValid);
 
         assertTrue(isValid);
         assertTrue(serialized.length > 0);

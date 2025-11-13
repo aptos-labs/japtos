@@ -5,6 +5,7 @@ import com.aptoslabs.japtos.core.crypto.AnyPublicKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
 import com.aptoslabs.japtos.core.crypto.PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -143,6 +144,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
             }
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize public keys", e);
             throw new RuntimeException("Failed to serialize public keys", e);
         }
     }

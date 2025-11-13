@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.types.MoveOption;
 import com.aptoslabs.japtos.types.TransactionArgument;
@@ -46,7 +48,7 @@ public class MoveOptionTest {
         );
         assertTrue(mappedNone.isNone());
         
-        System.out.println("MoveOption method tests passed!");
+        Logger.info("MoveOption method tests passed!");
     }
     
     @Test
@@ -93,7 +95,7 @@ public class MoveOptionTest {
         assertEquals(33, someAddrBytes.length); // 1 (length) + 32 (address)
         assertEquals(0x01, someAddrBytes[0]); // Length = 1
         
-        System.out.println("MoveOption serialization tests passed!");
+        Logger.info("MoveOption serialization tests passed!");
     }
     
     @Test
@@ -128,6 +130,6 @@ public class MoveOptionTest {
         assertNotNull(MoveOption.u8Vector(new byte[]{1, 2, 3}));
         assertNotNull(MoveOption.u8Vector(null));
         
-        System.out.println("MoveOption factory method tests passed!");
+        Logger.info("MoveOption factory method tests passed!");
     }
 }

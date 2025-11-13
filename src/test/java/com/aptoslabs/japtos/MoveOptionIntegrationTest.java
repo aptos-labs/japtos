@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.aptoslabs.japtos.utils.Logger;
 
 /**
  * mvn test -Dtest=MoveOptionIntegrationTest
@@ -95,18 +96,19 @@ public class MoveOptionIntegrationTest {
             .build();
         client = new AptosClient(config);
         
-        System.out.println("Test account: " + deployerAccount.getAccountAddress());
-        System.out.println("Module address: " + moduleAddress);
+        Logger.info("Test account: %s", deployerAccount.getAccountAddress());
+        Logger.info("Module address: %s", moduleAddress);
     }
     
     @Test
     public void testAllOptionsOnChain() throws Exception {
         if (DEPLOYER_PRIVATE_KEY.isEmpty()) {
-            System.out.println("Skipping test - module not deployed");
+            Logger.warn("Skipping test - module not deployed");
             return;
         }
         
-        System.out.println("\n=== Testing all option types on-chain ===");
+        Logger.info("");
+        Logger.info("=== Testing all option types on-chain ===");
         
         // Create arguments with mix of Some and None values
         List<TransactionArgument> args = Arrays.asList(
@@ -120,14 +122,14 @@ public class MoveOptionIntegrationTest {
         );
         
         // Log what we're sending
-        System.out.println("Sending transaction with:");
-        System.out.println("  u64_opt: Some(12345)");
-        System.out.println("  u128_opt: None");
-        System.out.println("  string_opt: Some(\"hello from japtos\")");
-        System.out.println("  address_opt: None");
-        System.out.println("  bool_opt: Some(true)");
-        System.out.println("  u8_opt: None");
-        System.out.println("  u256_opt: Some(999)");
+        Logger.debug("Sending transaction with:");
+        Logger.debug("  u64_opt: Some(12345)");
+        Logger.debug("  u128_opt: None");
+        Logger.debug("  string_opt: Some(\"hello from japtos\")");
+        Logger.debug("  address_opt: None");
+        Logger.debug("  bool_opt: Some(true)");
+        Logger.debug("  u8_opt: None");
+        Logger.debug("  u256_opt: Some(999)");
         
         // Create and execute transaction - using test_options from simple_option_test
         String txHash = executeModuleFunction("test_options", Arrays.asList(
@@ -136,18 +138,19 @@ public class MoveOptionIntegrationTest {
             args.get(4), // bool_opt
             args.get(3)  // address_opt
         ));
-        System.out.println("Transaction hash: " + txHash);
-        System.out.println("test_all_options executed successfully!");
+        Logger.info("Transaction hash: %s", txHash);
+        Logger.info("test_all_options executed successfully!");
     }
     
     @Test
     public void testMixedArgsOnChain() throws Exception {
         if (DEPLOYER_PRIVATE_KEY.isEmpty()) {
-            System.out.println("Skipping test - module not deployed");
+            Logger.warn("Skipping test - module not deployed");
             return;
         }
         
-        System.out.println("\n=== Testing mixed required and optional args on-chain ===");
+        Logger.info("");
+        Logger.info("=== Testing mixed required and optional args on-chain ===");
         
         // Create arguments mixing required and optional parameters
         List<TransactionArgument> args = Arrays.asList(
@@ -159,12 +162,12 @@ public class MoveOptionIntegrationTest {
         );
         
         // Log what we're sending
-        System.out.println("Sending transaction with:");
-        System.out.println("  required_u64: 456");
-        System.out.println("  optional_string: Some(\"optional value\")");
-        System.out.println("  required_bool: false");
-        System.out.println("  optional_address: Some(" + deployerAccount.getAccountAddress() + ")");
-        System.out.println("  optional_amount: None");
+        Logger.debug("Sending transaction with:");
+        Logger.debug("  required_u64: 456");
+        Logger.debug("  optional_string: Some(\"optional value\")");
+        Logger.debug("  required_bool: false");
+        Logger.debug("  optional_address: Some(%s)", deployerAccount.getAccountAddress());
+        Logger.debug("  optional_amount: None");
         
         // Create and execute transaction - using test_mixed from simple_option_test
         String txHash = executeModuleFunction("test_mixed", Arrays.asList(
@@ -173,18 +176,19 @@ public class MoveOptionIntegrationTest {
             args.get(2), // required_bool
             args.get(4)  // optional_u64 (using optional_amount)
         ));
-        System.out.println("Transaction hash: " + txHash);
-        System.out.println("test_mixed_args executed successfully!");
+        Logger.info("Transaction hash: %s", txHash);
+        Logger.info("test_mixed_args executed successfully!");
     }
     
     @Test 
     public void testEdgeCases() throws Exception {
         if (DEPLOYER_PRIVATE_KEY.isEmpty()) {
-            System.out.println("Skipping test - module not deployed");
+            Logger.warn("Skipping test - module not deployed");
             return;
         }
         
-        System.out.println("\n=== Testing edge cases ===");
+        Logger.info("");
+        Logger.info("=== Testing edge cases ===");
         
         // Test with all None values
         List<TransactionArgument> allNone = Arrays.asList(
@@ -194,10 +198,10 @@ public class MoveOptionIntegrationTest {
             MoveOption.address(null)
         );
         
-        System.out.println("Testing with all None values...");
+        Logger.debug("Testing with all None values...");
         String txHash1 = executeModuleFunction("test_options", allNone);
-        System.out.println("Transaction hash: " + txHash1);
-        System.out.println("All None values handled correctly!");
+        Logger.info("Transaction hash: %s", txHash1);
+        Logger.info("All None values handled correctly!");
         
         // Test with all Some values
         List<TransactionArgument> allSome = Arrays.asList(
@@ -207,10 +211,11 @@ public class MoveOptionIntegrationTest {
             MoveOption.address(AccountAddress.fromHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
         );
         
-        System.out.println("\nTesting with maximum values...");
+        Logger.info("");
+        Logger.debug("Testing with maximum values...");
         String txHash2 = executeModuleFunction("test_options", allSome);
-        System.out.println("Transaction hash: " + txHash2);
-        System.out.println("Maximum values handled correctly!");
+        Logger.info("Transaction hash: %s", txHash2);
+        Logger.info("Maximum values handled correctly!");
     }
     
     /**
@@ -220,7 +225,7 @@ public class MoveOptionIntegrationTest {
         // Get account balance to ensure we have gas
         long balance = client.getAccountCoinAmount(deployerAccount.getAccountAddress());
         if (balance == 0) {
-            System.out.println("Account has no balance, funding...");
+            Logger.debug("Account has no balance, funding...");
             String fundingHash = FundingUtils.fundAccount(
                 deployerAccount.getAccountAddress().toString(), 
                 "100000000",  // 1 APT in octas

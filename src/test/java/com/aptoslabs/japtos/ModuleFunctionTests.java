@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.api.AptosConfig;
@@ -59,8 +61,8 @@ public class ModuleFunctionTests {
                 // Continue even if faucet fails; transaction may still succeed depending on localnet config
             }
         } catch (Exception e) {
-            System.out.println("⚠️  LOCALNET not available at " + (config != null ? config.getFullnode() : "unknown"));
-            System.out.println("   Some tests may be skipped or run with different network configurations");
+            Logger.info("⚠️  LOCALNET not available at " + (config != null ? config.getFullnode() : "unknown"));
+            Logger.info("   Some tests may be skipped or run with different network configurations");
         }
     }
 
@@ -74,11 +76,11 @@ public class ModuleFunctionTests {
 
         // Get current sequence number
         long sequenceNumber = client.getNextSequenceNumber(sender.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Check initial balance
         long initialBalance = client.getAccountCoinAmount(sender.getAccountAddress());
-        System.out.println("   Initial balance: " + initialBalance + " octas");
+        Logger.info("   Initial balance: " + initialBalance + " octas");
 
         // Build entry function payload for 0x1::coin::transfer(recipient, amount)
         ModuleId moduleId = new ModuleId(AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"), new Identifier("coin"));
@@ -109,33 +111,33 @@ public class ModuleFunctionTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting transaction...");
+        Logger.info("   Submitting transaction...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   Transaction submitted with hash: " + pending.getHash());
+        Logger.info("   Transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   Transaction committed successfully");
+        Logger.info("   Transaction committed successfully");
 
         // Check final balance
         long finalBalance = client.getAccountCoinAmount(sender.getAccountAddress());
-        System.out.println("   Final balance: " + finalBalance + " octas");
-        System.out.println("   Balance change: " + (finalBalance - initialBalance) + " octas");
+        Logger.info("   Final balance: " + finalBalance + " octas");
+        Logger.info("   Balance change: " + (finalBalance - initialBalance) + " octas");
 
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   Transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   Transaction serialized successfully (" + transactionBytes.length + " bytes)");
     }
 
     @Test
     @Order(2)
     @DisplayName("Call settlement module settle_transaction function on testnet")
     void callSettlementFunction() throws Exception {
-        System.out.println("=== Testing Settlement Module settle_transaction Function ===");
+        Logger.info("=== Testing Settlement Module settle_transaction Function ===");
 
         // Create test account with the provided private key
         String privateKeyHex = "0xaad64290f0c57072570e64f25c63929fd22cedc1c224aaedf68d9ee78c0b94cd";
@@ -145,9 +147,9 @@ public class ModuleFunctionTests {
         Ed25519PrivateKey privateKey = Ed25519PrivateKey.fromHex(privateKeyHex);
         Ed25519Account testAccount = Ed25519Account.fromPrivateKey(privateKey);
 
-        System.out.println("   Test account created:");
-        System.out.println("   - Address: " + testAccount.getAccountAddress());
-        System.out.println("   - Public Key: " + testAccount.getPublicKey());
+        Logger.info("   Test account created:");
+        Logger.info("   - Address: " + testAccount.getAccountAddress());
+        Logger.info("   - Public Key: " + testAccount.getPublicKey());
 
         // Switch to testnet for this test
         AptosConfig testnetConfig = AptosConfig.builder().network(AptosConfig.Network.TESTNET).build();
@@ -155,7 +157,7 @@ public class ModuleFunctionTests {
 
         // Check initial balance
         long initialBalance = testnetClient.getAccountCoinAmount(testAccount.getAccountAddress());
-        System.out.println("   Initial balance: " + initialBalance + " octas");
+        Logger.info("   Initial balance: " + initialBalance + " octas");
 
         // Settlement module parameters
         String moduleAddress = "0xee761e8721664eca5e7e5df280d71f1d8b9757bc5dedf8a9c605fe4578173999";
@@ -163,15 +165,15 @@ public class ModuleFunctionTests {
         String orderId = "oo" + new Random().nextInt(1000); // Order ID (max 8 characters)
         long amount = 1000000L; // 1 APT in octas
 
-        System.out.println("   Settlement parameters:");
-        System.out.println("   - Module address: " + moduleAddress);
-        System.out.println("   - Merchant ID: " + merchantId);
-        System.out.println("   - Order ID: " + orderId);
-        System.out.println("   - Amount: " + amount + " octas (1 APT)");
+        Logger.info("   Settlement parameters:");
+        Logger.info("   - Module address: " + moduleAddress);
+        Logger.info("   - Merchant ID: " + merchantId);
+        Logger.info("   - Order ID: " + orderId);
+        Logger.info("   - Amount: " + amount + " octas (1 APT)");
 
         // Get current sequence number
         long sequenceNumber = testnetClient.getNextSequenceNumber(testAccount.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Build entry function payload for settle_transaction
         ModuleId moduleId = new ModuleId(AccountAddress.fromHex(moduleAddress), new Identifier("settlement"));
@@ -205,23 +207,23 @@ public class ModuleFunctionTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting settlement transaction...");
+        Logger.info("   Submitting settlement transaction...");
         PendingTransaction pending = testnetClient.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   Settlement transaction submitted with hash: " + pending.getHash());
+        Logger.info("   Settlement transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed with retry logic
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = null;
 
         // Try multiple times with delays to handle network latency
         for (int attempt = 1; attempt <= 5; attempt++) {
             try {
-                System.out.println("   Attempting to fetch transaction (attempt " + attempt + "/5)...");
+                Logger.info("   Attempting to fetch transaction (attempt " + attempt + "/5)...");
                 committed = testnetClient.waitForTransaction(pending.getHash());
                 break; // Success, exit retry loop
             } catch (Exception e) {
-                System.out.println("   Attempt " + attempt + " failed: " + e.getMessage());
+                Logger.info("   Attempt " + attempt + " failed: " + e.getMessage());
                 if (attempt < 5) {
                     try {
                         Thread.sleep(2000); // Wait 2 seconds before retry
@@ -231,16 +233,16 @@ public class ModuleFunctionTests {
                     }
                 } else {
                     // Final attempt failed - check if transaction might still be successful
-                    System.out.println("   ⚠️  Unable to fetch transaction after 5 attempts");
-                    System.out.println("   This may be due to network latency, but the transaction might still be successful");
+                    Logger.info("   ⚠️  Unable to fetch transaction after 5 attempts");
+                    Logger.info("   This may be due to network latency, but the transaction might still be successful");
 
                     // Verify we can serialize the transaction
                     byte[] transactionBytes = signed.bcsToBytes();
                     assertTrue(transactionBytes.length > 0);
-                    System.out.println("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
-                    System.out.println("   ✅ Transaction submitted successfully with hash: " + pending.getHash());
-                    System.out.println("   ✅ String serialization issue has been completely resolved!");
-                    System.out.println("   💡 Check the transaction on Aptos Explorer to verify success");
+                    Logger.info("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
+                    Logger.info("   ✅ Transaction submitted successfully with hash: " + pending.getHash());
+                    Logger.info("   ✅ String serialization issue has been completely resolved!");
+                    Logger.info("   💡 Check the transaction on Aptos Explorer to verify success");
                     return; // Exit gracefully
                 }
             }
@@ -250,34 +252,34 @@ public class ModuleFunctionTests {
 
         // Check if transaction was successful
         if (committed.isSuccess()) {
-            System.out.println("   🎉 Settlement transaction executed successfully!");
-            System.out.println("   VM Status: " + committed.getVmStatus());
+            Logger.info("   🎉 Settlement transaction executed successfully!");
+            Logger.info("   VM Status: " + committed.getVmStatus());
 
             // Check final balance
             long finalBalance = testnetClient.getAccountCoinAmount(testAccount.getAccountAddress());
-            System.out.println("   Final balance: " + finalBalance + " octas");
-            System.out.println("   Balance change: " + (finalBalance - initialBalance) + " octas");
+            Logger.info("   Final balance: " + finalBalance + " octas");
+            Logger.info("   Balance change: " + (finalBalance - initialBalance) + " octas");
 
             // Verify we can serialize the transaction
             byte[] transactionBytes = signed.bcsToBytes();
             assertTrue(transactionBytes.length > 0);
-            System.out.println("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
-            System.out.println("   ✅ Settlement function called successfully!");
-            System.out.println("   ✅ String serialization working perfectly!");
-            System.out.println("   ✅ Merchant ID 1014 received payment for order: " + orderId);
+            Logger.info("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
+            Logger.info("   ✅ Settlement function called successfully!");
+            Logger.info("   ✅ String serialization working perfectly!");
+            Logger.info("   ✅ Merchant ID 1014 received payment for order: " + orderId);
 
             // Validate that the transaction was properly processed
             assertTrue(finalBalance < initialBalance, "Account balance should decrease after payment");
-            System.out.println("   ✅ All validations passed - test completed successfully!");
+            Logger.info("   ✅ All validations passed - test completed successfully!");
         } else {
-            System.out.println("   ❌ Settlement transaction failed with VM status: " + committed.getVmStatus());
-            System.out.println("   This indicates an issue with the Move module validation");
+            Logger.info("   ❌ Settlement transaction failed with VM status: " + committed.getVmStatus());
+            Logger.info("   This indicates an issue with the Move module validation");
 
             // Even if it fails, we should be able to serialize the transaction
             byte[] transactionBytes = signed.bcsToBytes();
             assertTrue(transactionBytes.length > 0);
-            System.out.println("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
-            System.out.println("   ✅ String serialization is working correctly");
+            Logger.info("   ✅ Transaction serialized successfully (" + transactionBytes.length + " bytes)");
+            Logger.info("   ✅ String serialization is working correctly");
 
             // Fail the test if the transaction actually failed on-chain
             fail("Transaction failed on-chain with VM status: " + committed.getVmStatus());

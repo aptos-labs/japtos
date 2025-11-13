@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
@@ -55,9 +57,9 @@ class AccountDerivedPathTests {
     @Test
     @DisplayName("Derive account from mnemonic and path - should match TypeScript SDK results")
     void testFromDerivationPath() {
-        System.out.println("=== Testing Account.fromDerivationPath ===");
-        System.out.println("Mnemonic: " + TEST_MNEMONIC);
-        System.out.println("Path: " + DERIVATION_PATH);
+        Logger.info("=== Testing Account.fromDerivationPath ===");
+        Logger.info("Mnemonic: " + TEST_MNEMONIC);
+        Logger.info("Path: " + DERIVATION_PATH);
 
         // Derive account using our Java implementation
         Ed25519Account account = Account.fromDerivationPath(DERIVATION_PATH, TEST_MNEMONIC);
@@ -71,11 +73,11 @@ class AccountDerivedPathTests {
         String actualPublicKey = account.getPublicKey().toString();
         String actualPrivateKey = account.getPrivateKey().toString();
 
-        System.out.println("Expected public key:  " + EXPECTED_PUBLIC_KEY);
-        System.out.println("Actual public key:    " + actualPublicKey);
-        System.out.println("Expected private key: " + EXPECTED_PRIVATE_KEY);
-        System.out.println("Actual private key:   " + actualPrivateKey);
-        System.out.println("Account address:      " + account.getAccountAddress());
+        Logger.info("Expected public key:  " + EXPECTED_PUBLIC_KEY);
+        Logger.info("Actual public key:    " + actualPublicKey);
+        Logger.info("Expected private key: " + EXPECTED_PRIVATE_KEY);
+        Logger.info("Actual private key:   " + actualPrivateKey);
+        Logger.info("Account address:      " + account.getAccountAddress());
 
         assertEquals(EXPECTED_PUBLIC_KEY, actualPublicKey,
                 "Public key should match the TypeScript SDK derived value");
@@ -91,13 +93,13 @@ class AccountDerivedPathTests {
         assertEquals(account.getPublicKey().toString(), derivedPublicKey.toString(),
                 "Public key derived from private key should match account public key");
 
-        System.out.println("✓ All validations passed!");
+        Logger.info("✓ All validations passed!");
     }
 
     @Test
     @DisplayName("Test direct Ed25519PrivateKey.fromDerivationPath")
     void testPrivateKeyFromDerivationPath() {
-        System.out.println("=== Testing Ed25519PrivateKey.fromDerivationPath ===");
+        Logger.info("=== Testing Ed25519PrivateKey.fromDerivationPath ===");
 
         // Test direct private key derivation
         Ed25519PrivateKey privateKey = Ed25519PrivateKey.fromDerivationPath(DERIVATION_PATH, TEST_MNEMONIC);
@@ -111,15 +113,15 @@ class AccountDerivedPathTests {
         assertEquals(EXPECTED_PUBLIC_KEY, publicKey.toString(),
                 "Derived public key should match expected value");
 
-        System.out.println("Private key: " + privateKey);
-        System.out.println("Public key:  " + publicKey);
-        System.out.println("✓ Direct private key derivation test passed!");
+        Logger.info("Private key: " + privateKey);
+        Logger.info("Public key:  " + publicKey);
+        Logger.info("✓ Direct private key derivation test passed!");
     }
 
     @Test
     @DisplayName("Test multiple derivation paths")
     void testMultipleDerivationPaths() {
-        System.out.println("=== Testing Multiple Derivation Paths ===");
+        Logger.info("=== Testing Multiple Derivation Paths ===");
 
         // Test different account indices
         String[] paths = {
@@ -134,9 +136,9 @@ class AccountDerivedPathTests {
             accounts[i] = Account.fromDerivationPath(paths[i], TEST_MNEMONIC);
             assertNotNull(accounts[i], "Account " + i + " should not be null");
 
-            System.out.println("Path " + paths[i] + ":");
-            System.out.println("  Public key: " + accounts[i].getPublicKey().toString());
-            System.out.println("  Address:    " + accounts[i].getAccountAddress());
+            Logger.info("Path " + paths[i] + ":");
+            Logger.info("  Public key: " + accounts[i].getPublicKey().toString());
+            Logger.info("  Address:    " + accounts[i].getAccountAddress());
         }
 
         // Verify all accounts are different
@@ -151,13 +153,13 @@ class AccountDerivedPathTests {
             }
         }
 
-        System.out.println("✓ Multiple derivation paths test passed!");
+        Logger.info("✓ Multiple derivation paths test passed!");
     }
 
     @Test
     @DisplayName("Test invalid derivation paths")
     void testInvalidDerivationPaths() {
-        System.out.println("=== Testing Invalid Derivation Paths ===");
+        Logger.info("=== Testing Invalid Derivation Paths ===");
 
         String[] invalidPaths = {
                 "m/44'/637'/0'/0/0",     // Missing hardened marker on last component
@@ -169,22 +171,22 @@ class AccountDerivedPathTests {
         };
 
         for (String invalidPath : invalidPaths) {
-            System.out.println("Testing invalid path: " + invalidPath);
+            Logger.info("Testing invalid path: " + invalidPath);
 
             Exception exception = assertThrows(IllegalArgumentException.class, () -> {
                 Account.fromDerivationPath(invalidPath, TEST_MNEMONIC);
             }, "Should throw IllegalArgumentException for invalid path: " + invalidPath);
 
-            System.out.println("  ✓ Correctly rejected: " + exception.getMessage());
+            Logger.info("  ✓ Correctly rejected: " + exception.getMessage());
         }
 
-        System.out.println("✓ Invalid path validation test passed!");
+        Logger.info("✓ Invalid path validation test passed!");
     }
 
     @Test
     @DisplayName("Test deterministic derivation")
     void testDeterministicDerivation() {
-        System.out.println("=== Testing Deterministic Derivation ===");
+        Logger.info("=== Testing Deterministic Derivation ===");
 
         // Derive the same account multiple times and verify consistency
         Ed25519Account account1 = Account.fromDerivationPath(DERIVATION_PATH, TEST_MNEMONIC);
@@ -206,9 +208,9 @@ class AccountDerivedPathTests {
         assertEquals(account1.getAccountAddress().toString(), account3.getAccountAddress().toString(),
                 "Account addresses should be identical for same path and mnemonic (third derivation)");
 
-        System.out.println("Derived account consistently:");
-        System.out.println("  Public key: " + account1.getPublicKey().toString());
-        System.out.println("  Address:    " + account1.getAccountAddress());
-        System.out.println("✓ Deterministic derivation test passed!");
+        Logger.info("Derived account consistently:");
+        Logger.info("  Public key: " + account1.getPublicKey().toString());
+        Logger.info("  Address:    " + account1.getAccountAddress());
+        Logger.info("✓ Deterministic derivation test passed!");
     }
 }

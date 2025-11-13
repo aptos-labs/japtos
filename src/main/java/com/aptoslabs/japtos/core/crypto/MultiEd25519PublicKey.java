@@ -2,6 +2,7 @@ package com.aptoslabs.japtos.core.crypto;
 
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AuthenticationKey;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -83,6 +84,7 @@ public class MultiEd25519PublicKey implements PublicKey {
             serialize(serializer);
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize MultiEd25519PublicKey", e);
             throw new RuntimeException("Failed to serialize MultiEd25519PublicKey", e);
         }
     }

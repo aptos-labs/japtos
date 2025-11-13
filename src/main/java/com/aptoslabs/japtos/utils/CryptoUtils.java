@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.utils;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -57,11 +59,12 @@ public class CryptoUtils {
                                 // Just check if SHA3-256 is available without provider
                                 try {
                                     MessageDigest.getInstance(SHA3_256_ALGORITHM);
-                                    System.out.println("SHA3-256 available on Android without provider registration");
+                                    Logger.debug("SHA3-256 available on Android without provider registration");
                                     cryptoProviderRegistered = true;
                                     return;
                                 } catch (NoSuchAlgorithmException e) {
                                     // SHA3-256 not available, continue with provider registration
+                                    Logger.debug("SHA3-256 not available on Android, will register provider");
                                 }
                             }
 
@@ -70,16 +73,16 @@ public class CryptoUtils {
                                 Object spongyCastleProvider = spongyCastleProviderClass.getDeclaredConstructor().newInstance();
                                 Security.insertProviderAt((java.security.Provider) spongyCastleProvider, 1);
                                 activeProviderName = "SC";
-                                System.out.println("SpongyCastle provider registered successfully");
+                                Logger.debug("SpongyCastle provider registered successfully");
                             } else {
                                 activeProviderName = "SC";
-                                System.out.println("SpongyCastle provider already registered");
+                                Logger.debug("SpongyCastle provider already registered");
                             }
                             cryptoProviderRegistered = true;
                             return;
                         } catch (Exception e) {
                             // SpongyCastle not available, try BouncyCastle
-                            System.out.println("SpongyCastle not available, trying BouncyCastle: " + e.getMessage());
+                            Logger.debug("SpongyCastle not available, trying BouncyCastle: %s", e.getMessage());
                         }
 
                         // Try to load BouncyCastle
@@ -89,18 +92,18 @@ public class CryptoUtils {
                                 Object bouncyCastleProvider = bouncyCastleProviderClass.getDeclaredConstructor().newInstance();
                                 Security.insertProviderAt((java.security.Provider) bouncyCastleProvider, 1);
                                 activeProviderName = "BC";
-                                System.out.println("BouncyCastle provider registered successfully");
+                                Logger.debug("BouncyCastle provider registered successfully");
                             } else {
                                 activeProviderName = "BC";
-                                System.out.println("BouncyCastle provider already registered");
+                                Logger.debug("BouncyCastle provider already registered");
                             }
                             cryptoProviderRegistered = true;
                         } catch (Exception e) {
-                            System.err.println("Warning: Could not register BouncyCastle provider: " + e.getMessage());
+                            Logger.warn("Could not register BouncyCastle provider", e);
                         }
                     } catch (Exception e) {
                         // Log warning but don't fail - we'll handle it in getMessageDigest
-                        System.err.println("Warning: Could not register any crypto provider: " + e.getMessage());
+                        Logger.warn("Could not register any crypto provider", e);
                     }
                 }
             }
@@ -138,6 +141,7 @@ public class CryptoUtils {
                         }
                     } catch (Exception retryException) {
                         // Ignore retry exception, throw original
+                        Logger.debug("Failed to retry provider initialization", retryException);
                     }
 
                     throw new RuntimeException(
@@ -172,6 +176,7 @@ public class CryptoUtils {
         try {
             return MessageDigest.getInstance(SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
+            Logger.error("SHA-256 not available", e);
             throw new RuntimeException("SHA-256 not available", e);
         }
     }

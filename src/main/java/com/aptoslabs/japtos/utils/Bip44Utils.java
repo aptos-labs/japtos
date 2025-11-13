@@ -1,5 +1,6 @@
 package com.aptoslabs.japtos.utils;
 
+import com.aptoslabs.japtos.utils.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
@@ -92,6 +93,7 @@ public class Bip44Utils {
             // Simple PBKDF2 implementation
             return pbkdf2(normalizedMnemonic.getBytes(StandardCharsets.UTF_8), salt, 2048, 64);
         } catch (Exception e) {
+            Logger.error("Failed to derive seed from mnemonic", e);
             throw new RuntimeException("Failed to derive seed from mnemonic", e);
         }
     }
@@ -142,6 +144,7 @@ public class Bip44Utils {
 
             return new DerivedKeys(key, chainCode);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            Logger.error("Failed to derive key", e);
             throw new RuntimeException("Failed to derive key", e);
         }
     }
@@ -162,6 +165,7 @@ public class Bip44Utils {
 
             return deriveKey(parentKeys.chainCode, buffer.array());
         } catch (Exception e) {
+            Logger.error("Failed to derive child key", e);
             throw new RuntimeException("Failed to derive child key", e);
         }
     }

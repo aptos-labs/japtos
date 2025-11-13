@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.bcs;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.utils.HexUtils;
 
 import java.io.IOException;
@@ -78,6 +80,7 @@ public interface Serializable {
             serialize(serializer);
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize object", e);
             throw new RuntimeException("Failed to serialize object", e);
         }
     }

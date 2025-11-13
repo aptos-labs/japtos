@@ -3,6 +3,7 @@ package com.aptoslabs.japtos.core.crypto;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AuthenticationKey;
 import com.aptoslabs.japtos.utils.HexUtils;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -102,6 +103,7 @@ public class KeylessPublicKey implements PublicKey {
             serialize(serializer);
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize KeylessPublicKey", e);
             throw new RuntimeException("Failed to serialize KeylessPublicKey", e);
         }
     }
@@ -126,6 +128,7 @@ public class KeylessPublicKey implements PublicKey {
             serializer.serializeFixedBytes(toBytes());
             return AuthenticationKey.fromSchemeAndBytes((byte) 0, serializer.toByteArray());
         } catch (Exception e) {
+            Logger.error("Failed to derive auth key for KeylessPublicKey", e);
             throw new RuntimeException("Failed to derive auth key", e);
         }
     }
