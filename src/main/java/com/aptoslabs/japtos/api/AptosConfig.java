@@ -5,6 +5,8 @@ import com.aptoslabs.japtos.client.HttpClientImpl;
 import com.aptoslabs.japtos.client.dto.HttpResponse;
 import com.aptoslabs.japtos.plugin.PluginSettings;
 import com.aptoslabs.japtos.transaction.TransactionSubmitter;
+import com.aptoslabs.japtos.utils.LogLevel;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +23,7 @@ public class AptosConfig {
     private final Network network;
     private final Map<String, PluginSettings> pluginSettings;
     private final TransactionSubmitter transactionSubmitter;
+    private final LogLevel logLevel;
 
     public AptosConfig(AptosConfigBuilder builder) {
         this.fullnode = builder.fullnode;
@@ -30,6 +33,8 @@ public class AptosConfig {
         this.network = builder.network;
         this.pluginSettings = builder.pluginSettings != null ? new HashMap<>(builder.pluginSettings) : new HashMap<>();
         this.transactionSubmitter = builder.transactionSubmitter;
+        this.logLevel = builder.logLevel != null ? builder.logLevel : LogLevel.DEBUG;
+        Logger.setLogLevel(this.logLevel);
     }
 
     public static AptosConfigBuilder builder() {
@@ -93,6 +98,10 @@ public class AptosConfig {
 
     public TransactionSubmitter getTransactionSubmitter() {
         return transactionSubmitter;
+    }
+
+    public LogLevel getLogLevel() {
+        return logLevel;
     }
 
     /**
@@ -161,7 +170,7 @@ public class AptosConfig {
                     }
                 } catch (Exception e) {
                     // If we can't fetch the chain ID, use a default value
-                    System.err.println("Warning: Could not fetch chain ID from " + fullnode + ", using default: " + e.getMessage());
+                    Logger.warn("Could not fetch chain ID from %s, using default: %s", fullnode, e.getMessage());
                 }
 
                 // Fallback to default values if fetching fails
@@ -200,6 +209,7 @@ public class AptosConfig {
         private Network network;
         private Map<String, PluginSettings> pluginSettings;
         private TransactionSubmitter transactionSubmitter;
+        private LogLevel logLevel;
 
         public AptosConfigBuilder() {
         }
@@ -275,6 +285,11 @@ public class AptosConfig {
 
         public AptosConfigBuilder transactionSubmitter(TransactionSubmitter transactionSubmitter) {
             this.transactionSubmitter = transactionSubmitter;
+            return this;
+        }
+
+        public AptosConfigBuilder logLevel(LogLevel logLevel) {
+            this.logLevel = logLevel;
             return this;
         }
 

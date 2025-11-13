@@ -89,6 +89,65 @@ AptosConfig config = AptosConfig.builder()
         AptosClient client = new AptosClient(config);
 ```
 
+### 📊 Logging Configuration
+
+The Japtos SDK includes a built-in logging system that provides detailed information about SDK operations. You can configure the logging level when initializing the client:
+
+```java
+import com.aptoslabs.japtos.client.AptosClient;
+import com.aptoslabs.japtos.api.AptosConfig;
+import com.aptoslabs.japtos.utils.LogLevel;
+
+// Configure with specific log level
+AptosConfig config = AptosConfig.builder()
+        .network(AptosConfig.Network.DEVNET)
+        .logLevel(LogLevel.INFO)  // Available: DEBUG, INFO, WARN, ERROR
+        .build();
+
+AptosClient client = new AptosClient(config);
+// Output: [2025-11-13 11:09:32.851] [INFO] Japtos SDK v1.1.6 initialized [DEVNET] - Support: https://github.com/aptos-labs/japtos
+```
+
+**Log Levels:**
+- `LogLevel.DEBUG` - Detailed information for debugging (default)
+- `LogLevel.INFO` - General information messages
+- `LogLevel.WARN` - Warning messages
+- `LogLevel.ERROR` - Only error messages
+
+**Example with different log levels:**
+
+```java
+// Production environment - only show warnings and errors
+AptosConfig prodConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.MAINNET)
+        .logLevel(LogLevel.WARN)
+        .build();
+
+// Development environment - show all logs
+AptosConfig devConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.DEVNET)
+        .logLevel(LogLevel.DEBUG)
+        .build();
+
+// Custom network with error-only logging
+AptosConfig customConfig = AptosConfig.builder()
+        .fullnode("https://custom.fullnode.example.com")
+        .logLevel(LogLevel.ERROR)
+        .build();
+```
+
+**Changing log level at runtime:**
+
+```java
+import com.aptoslabs.japtos.utils.Logger;
+
+// Change log level after initialization
+Logger.setLogLevel(LogLevel.DEBUG);
+
+// Get current log level
+LogLevel currentLevel = Logger.getLogLevel();
+```
+
 ## 📚 Usage Examples
 
 ### 🔑 Basic Account Management

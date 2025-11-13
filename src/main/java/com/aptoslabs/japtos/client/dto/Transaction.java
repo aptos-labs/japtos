@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.client.dto;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -137,6 +139,7 @@ public class Transaction {
         try {
             return Long.parseLong(gasUsed);
         } catch (NumberFormatException e) {
+            Logger.debug("Failed to parse gas used: %s", gasUsed);
             return 0L;
         }
     }

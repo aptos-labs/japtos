@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.api.AptosConfig;
@@ -44,22 +46,22 @@ public class TransactionTests {
         senderAccount = Account.generate();
         recipientAccount = Account.generate();
 
-        System.out.println("=== Localnet Transaction Tests ===");
-        System.out.println("Network: " + network.name());
-        System.out.println("Fullnode URL: " + config.getFullnode());
-        System.out.println("Faucet URL: " + config.getFaucet());
-        System.out.println("Sender: " + senderAccount.getAccountAddress());
-        System.out.println("Recipient: " + recipientAccount.getAccountAddress());
+        Logger.info("=== Localnet Transaction Tests ===");
+        Logger.info("Network: " + network.name());
+        Logger.info("Fullnode URL: " + config.getFullnode());
+        Logger.info("Faucet URL: " + config.getFaucet());
+        Logger.info("Sender: " + senderAccount.getAccountAddress());
+        Logger.info("Recipient: " + recipientAccount.getAccountAddress());
 
         // Print localnet information
         try {
             var ledgerInfo = client.getLedgerInfo();
-            System.out.println("=== Localnet Information ===");
-            System.out.println("Chain ID: " + ledgerInfo.getChainId());
-            System.out.println("Ledger Version: " + ledgerInfo.getLedgerVersion());
-            System.out.println("Block Height: " + ledgerInfo.getBlockHeight());
-            System.out.println("Timestamp: " + ledgerInfo.getLedgerTimestamp());
-            System.out.println("===========================");
+            Logger.info("=== Localnet Information ===");
+            Logger.info("Chain ID: " + ledgerInfo.getChainId());
+            Logger.info("Ledger Version: " + ledgerInfo.getLedgerVersion());
+            Logger.info("Block Height: " + ledgerInfo.getBlockHeight());
+            Logger.info("Timestamp: " + ledgerInfo.getLedgerTimestamp());
+            Logger.info("===========================");
         } catch (AptosClientException e) {
             System.err.println("Failed to get localnet info: " + e.getMessage());
         }
@@ -69,18 +71,18 @@ public class TransactionTests {
     @Order(1)
     @DisplayName("Fund sender account using localnet faucet")
     void testFundSenderAccount() throws Exception {
-        System.out.println("\n1. Funding sender account on localnet...");
+        Logger.info("\n1. Funding sender account on localnet...");
 
         // Fund the sender account
         String fundingHash = FundingUtils.fundAccount(senderAccount.getAccountAddress().toString(), TestConfig.FUND_AMOUNT, network);
-        System.out.println("   Funding transaction hash: " + fundingHash);
+        Logger.info("   Funding transaction hash: " + fundingHash);
 
         // Wait for account to be funded
         Thread.sleep(2000); // Wait for transaction to be processed
         var accountInfo = client.getAccount(senderAccount.getAccountAddress());
         long sequenceNumber = accountInfo.getSequenceNumber();
-        System.out.println("   Sequence number: " + sequenceNumber);
-        System.out.println("   Account funded successfully");
+        Logger.info("   Sequence number: " + sequenceNumber);
+        Logger.info("   Account funded successfully");
 
         assertTrue(sequenceNumber >= 0);
     }
@@ -89,18 +91,18 @@ public class TransactionTests {
     @Order(2)
     @DisplayName("Fund recipient account using localnet faucet")
     void testFundRecipientAccount() throws Exception {
-        System.out.println("\n2. Funding recipient account on localnet...");
+        Logger.info("\n2. Funding recipient account on localnet...");
 
         // Fund the recipient account
         String fundingHash = FundingUtils.fundAccount(recipientAccount.getAccountAddress().toString(), TestConfig.FUND_AMOUNT, network);
-        System.out.println("   Funding transaction hash: " + fundingHash);
+        Logger.info("   Funding transaction hash: " + fundingHash);
 
         // Wait for account to be funded
         Thread.sleep(2000); // Wait for transaction to be processed
         var accountInfo = client.getAccount(recipientAccount.getAccountAddress());
         long sequenceNumber = accountInfo.getSequenceNumber();
-        System.out.println("   Sequence number: " + sequenceNumber);
-        System.out.println("   Account funded successfully");
+        Logger.info("   Sequence number: " + sequenceNumber);
+        Logger.info("   Account funded successfully");
 
         assertTrue(sequenceNumber >= 0);
     }
@@ -109,7 +111,7 @@ public class TransactionTests {
     @Order(3)
     @DisplayName("Sign and submit simple APT transfer transaction on localnet")
     void testSimpleTransfer() throws Exception {
-        System.out.println("\n3. Testing simple APT transfer on localnet...");
+        Logger.info("\n3. Testing simple APT transfer on localnet...");
 
         // Get current sequence number
         AccountInfo senderInfo = client.getAccount(senderAccount.getAccountAddress());
@@ -120,10 +122,10 @@ public class TransactionTests {
         long fundAmount = Long.parseLong(TestConfig.FUND_AMOUNT);
         if (senderBalance < fundAmount) {
             String fundingHash = FundingUtils.fundAccount(senderAccount.getAccountAddress().toString(), TestConfig.FUND_AMOUNT, network);
-            System.out.println("   Funding sender account with hash: " + fundingHash);
+            Logger.info("   Funding sender account with hash: " + fundingHash);
 
             // Wait for funding transaction to be committed
-            System.out.println("   Waiting for funding transaction to be committed...");
+            Logger.info("   Waiting for funding transaction to be committed...");
             Thread.sleep(3000); // Give time for transaction to be processed
         }
 
@@ -142,7 +144,7 @@ public class TransactionTests {
 
         // Build raw transaction
         long chainId = network.getChainId();
-        System.out.println("   Using chain ID: " + chainId);
+        Logger.info("   Using chain ID: " + chainId);
         RawTransaction raw = new RawTransaction(
                 senderAccount.getAccountAddress(),
                 sequenceNumber,
@@ -156,31 +158,31 @@ public class TransactionTests {
         // Sign with authenticator and create SignedTransaction
         AccountAuthenticator authenticator = senderAccount.signTransactionWithAuthenticator(raw);
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
-        System.out.println("   Transaction signed");
+        Logger.info("   Transaction signed");
 
         // Submit the transaction
-        System.out.println("   Submitting transaction...");
+        Logger.info("   Submitting transaction...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   Transaction submitted with hash: " + pending.getHash());
+        Logger.info("   Transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   Transaction committed successfully");
+        Logger.info("   Transaction committed successfully");
 
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   Transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   Transaction serialized successfully (" + transactionBytes.length + " bytes)");
     }
 
     @Test
     @Order(4)
     @DisplayName("Test transaction signature verification (deterministic)")
     void testSignatureVerification() throws Exception {
-        System.out.println("\n4. Testing signature verification...");
+        Logger.info("\n4. Testing signature verification...");
 
         // Create a simple transfer payload
         ModuleId moduleId = new ModuleId(AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"), new Identifier("coin"));
@@ -217,7 +219,7 @@ public class TransactionTests {
         System.arraycopy(transactionBytes, 0, signingMessage, prefixHash.length, transactionBytes.length);
 
         boolean isValid = senderAccount.verifySignature(signingMessage, signature);
-        System.out.println("   Signature verification: " + isValid);
+        Logger.info("   Signature verification: " + isValid);
         assertTrue(isValid);
 
         byte[] wrong = "wrong message".getBytes();
@@ -228,17 +230,17 @@ public class TransactionTests {
     @Order(5)
     @DisplayName("Test message signing and verification")
     void testMessageSigning() {
-        System.out.println("\n5. Testing message signing...");
+        Logger.info("\n5. Testing message signing...");
 
         String message = "Hello, Aptos Devnet!";
         byte[] messageBytes = message.getBytes();
 
         var signature = senderAccount.sign(messageBytes);
-        System.out.println("   Message: " + message);
-        System.out.println("   Signature: " + HexUtils.bytesToHex(signature.toBytes()));
+        Logger.info("   Message: " + message);
+        Logger.info("   Signature: " + HexUtils.bytesToHex(signature.toBytes()));
 
         boolean isValid = senderAccount.verifySignature(messageBytes, signature);
-        System.out.println("   Signature valid: " + isValid);
+        Logger.info("   Signature valid: " + isValid);
         assertTrue(isValid);
 
         String wrongMessage = "Wrong message";
@@ -247,6 +249,6 @@ public class TransactionTests {
 
     @AfterAll
     void tearDown() {
-        System.out.println("\n=== Localnet Transaction Tests Completed ===");
+        Logger.info("\n=== Localnet Transaction Tests Completed ===");
     }
 }

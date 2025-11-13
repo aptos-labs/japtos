@@ -12,6 +12,7 @@ import com.aptoslabs.japtos.transaction.RawTransaction;
 import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
 import com.aptoslabs.japtos.transaction.authenticator.MultiKeyAuthenticator;
 import com.aptoslabs.japtos.utils.CryptoUtils;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -240,6 +241,7 @@ public class MultiKeyAccount extends Account {
             return ak.accountAddress();
 
         } catch (Exception e) {
+            Logger.error("Failed to derive account address for MultiKeyAccount", e);
             throw new RuntimeException("Failed to derive account address", e);
         }
     }
