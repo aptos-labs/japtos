@@ -144,6 +144,28 @@ public abstract class TransactionArgument implements Serializable {
     }
 
     /**
+     * U64 vector argument - serialized as a BCS vector<u64> for entry function usage.
+     */
+    public static class U64Vector extends TransactionArgument {
+        private final java.util.List<Long> values;
+
+        public U64Vector(java.util.List<Long> values) {
+            this.values = values == null ? java.util.Collections.emptyList() : values;
+        }
+
+        @Override
+        public void serialize(Serializer serializer) throws IOException {
+            // For entry function, we want the raw vector<u64> bytes
+            serializer.serializeU32AsUleb128(values.size());
+            for (Long v : values) {
+                serializer.serializeU64(v == null ? 0L : v);
+            }
+        }
+
+        public java.util.List<Long> getValues() { return values; }
+    }
+
+    /**
      * Bool argument
      */
     public static class Bool extends TransactionArgument {
