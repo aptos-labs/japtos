@@ -206,6 +206,7 @@ public abstract class TransactionArgument implements Serializable {
 
         @Override
         public void serialize(Serializer serializer) throws IOException {
+            serializer.serializeU8((byte) 9); // U64Vector tag
             // Serialize vector length as ULEB128
             serializer.serializeU32AsUleb128(values.size());
             // Serialize each u64 value
