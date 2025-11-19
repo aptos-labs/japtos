@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.account.MultiEd25519Account;
@@ -78,11 +80,11 @@ public class MultiKeyTests {
 
         // Get current sequence number
         long sequenceNumber = client.getNextSequenceNumber(multi.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Check initial balance
         long initialBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Initial balance: " + initialBalance + " octas");
+        Logger.info("   Initial balance: " + initialBalance + " octas");
 
         // Build raw transaction with proper sequence number
         RawTransaction raw = new RawTransaction(
@@ -100,26 +102,26 @@ public class MultiKeyTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting MultiEd25519 transaction...");
+        Logger.info("   Submitting MultiEd25519 transaction...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
+        Logger.info("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   MultiEd25519 transaction committed successfully");
+        Logger.info("   MultiEd25519 transaction committed successfully");
 
         // Check final balance
         long finalBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Final balance: " + finalBalance + " octas");
-        System.out.println("   Balance change: " + (finalBalance - initialBalance) + " octas");
+        Logger.info("   Final balance: " + finalBalance + " octas");
+        Logger.info("   Balance change: " + (finalBalance - initialBalance) + " octas");
 
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
     }
 
     @Test
@@ -153,11 +155,11 @@ public class MultiKeyTests {
 
         // Get current sequence number
         long sequenceNumber = client.getNextSequenceNumber(multi.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Check initial balance
         long initialBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Initial balance: " + initialBalance + " octas");
+        Logger.info("   Initial balance: " + initialBalance + " octas");
 
         // Build raw transaction with proper sequence number
         RawTransaction raw = new RawTransaction(
@@ -175,33 +177,33 @@ public class MultiKeyTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting MultiEd25519 transaction...");
+        Logger.info("   Submitting MultiEd25519 transaction...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
+        Logger.info("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   MultiEd25519 transaction committed successfully");
+        Logger.info("   MultiEd25519 transaction committed successfully");
 
         // Check final balance
         long finalBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Final balance: " + finalBalance + " octas");
-        System.out.println("   Balance change: " + (finalBalance - initialBalance) + " octas");
+        Logger.info("   Final balance: " + finalBalance + " octas");
+        Logger.info("   Balance change: " + (finalBalance - initialBalance) + " octas");
 
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
     }
 
     @Test
     @Order(3)
     @DisplayName("1-of-3 MultiEd25519 Complex: using from() method (LOCALNET)")
     void oneOfThreeComplex() throws Exception {
-        System.out.println("=== Testing 1-of-3 MultiEd25519 with from() method ===");
+        Logger.info("=== Testing 1-of-3 MultiEd25519 with from() method ===");
 
         // Create three Ed25519 accounts for the multi-signature setup
         Ed25519Account account1 = Ed25519Account.generate();
@@ -222,16 +224,16 @@ public class MultiKeyTests {
         // Create the multi-signature account using the from() method
         MultiEd25519Account multi = MultiEd25519Account.from(signers, publicKeys, threshold);
 
-        System.out.println("   Multi-signature account created:");
-        System.out.println("   - Account address: " + multi.getAccountAddress());
-        System.out.println("   - Number of signers: " + signers.size());
-        System.out.println("   - Number of public keys: " + publicKeys.size());
-        System.out.println("   - Threshold: " + threshold);
+        Logger.info("   Multi-signature account created:");
+        Logger.info("   - Account address: " + multi.getAccountAddress());
+        Logger.info("   - Number of signers: " + signers.size());
+        Logger.info("   - Number of public keys: " + publicKeys.size());
+        Logger.info("   - Threshold: " + threshold);
 
         // Fund the multi-signature account
         String fundHash = FundingUtils.fundAccount(multi.getAccountAddress().toString(), TestConfig.FUND_AMOUNT, config.getNetwork());
         assertNotNull(fundHash);
-        System.out.println("   Funding transaction hash: " + fundHash);
+        Logger.info("   Funding transaction hash: " + fundHash);
         Thread.sleep(TestConfig.FUNDING_DELAY_MS);
 
         // Build transfer payload
@@ -249,11 +251,11 @@ public class MultiKeyTests {
 
         // Get current sequence number
         long sequenceNumber = client.getNextSequenceNumber(multi.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Check initial balance
         long initialBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Initial balance: " + initialBalance + " octas");
+        Logger.info("   Initial balance: " + initialBalance + " octas");
 
         // Build raw transaction
         RawTransaction raw = new RawTransaction(
@@ -271,26 +273,26 @@ public class MultiKeyTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting MultiEd25519 transaction using from() method...");
+        Logger.info("   Submitting MultiEd25519 transaction using from() method...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
+        Logger.info("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   MultiEd25519 transaction committed successfully");
+        Logger.info("   MultiEd25519 transaction committed successfully");
 
         // Check final balance
         long finalBalance = client.getAccountCoinAmount(multi.getAccountAddress());
-        System.out.println("   Final balance: " + finalBalance + " octas");
-        System.out.println("   Balance change: " + (finalBalance - initialBalance) + " octas");
+        Logger.info("   Final balance: " + finalBalance + " octas");
+        Logger.info("   Balance change: " + (finalBalance - initialBalance) + " octas");
 
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
 
         // Additional verification: check that the account properties are correct
         assertEquals(1, multi.getPrivateKeys().size(), "Should have 1 private key (from account1)");
@@ -298,12 +300,12 @@ public class MultiKeyTests {
         assertEquals(threshold, multi.getThreshold(), "Threshold should match");
         assertEquals(Account.SigningScheme.MULTI_ED25519, multi.getSigningScheme(), "Should use MULTI_ED25519 scheme");
 
-        System.out.println("   ✓ All verifications passed!");
+        Logger.info("   ✓ All verifications passed!");
     }
 
     @Test
     public void testFromMethod() throws Exception {
-        System.out.println("=== Testing MultiEd25519Account.from() method ===");
+        Logger.info("=== Testing MultiEd25519Account.from() method ===");
 
         // Create some test accounts
         Ed25519Account account1 = Ed25519Account.generate();
@@ -332,16 +334,16 @@ public class MultiKeyTests {
         assertEquals(account1.getPrivateKey(), multiAccount.getPrivateKeys().get(0));
         assertEquals(account2.getPrivateKey(), multiAccount.getPrivateKeys().get(1));
 
-        System.out.println("   MultiEd25519Account.from() method test passed!");
-        System.out.println("   Account address: " + multiAccount.getAccountAddress());
-        System.out.println("   Number of private keys: " + multiAccount.getPrivateKeys().size());
-        System.out.println("   Number of public keys: " + multiAccount.getPublicKeys().size());
-        System.out.println("   Threshold: " + multiAccount.getThreshold());
+        Logger.info("   MultiEd25519Account.from() method test passed!");
+        Logger.info("   Account address: " + multiAccount.getAccountAddress());
+        Logger.info("   Number of private keys: " + multiAccount.getPrivateKeys().size());
+        Logger.info("   Number of public keys: " + multiAccount.getPublicKeys().size());
+        Logger.info("   Threshold: " + multiAccount.getThreshold());
     }
 
     @Test
     public void testFromMethodValidation() {
-        System.out.println("=== Testing MultiEd25519Account.from() validation ===");
+        Logger.info("=== Testing MultiEd25519Account.from() validation ===");
 
         Ed25519Account account1 = Ed25519Account.generate();
         Ed25519Account account2 = Ed25519Account.generate();
@@ -357,7 +359,7 @@ public class MultiKeyTests {
             MultiEd25519Account.from(signers, publicKeys, 1);
             fail("Should throw IllegalArgumentException when signers > threshold");
         } catch (IllegalArgumentException e) {
-            System.out.println("   ✓ Correctly rejected when signers > threshold: " + e.getMessage());
+            Logger.info("   ✓ Correctly rejected when signers > threshold: " + e.getMessage());
         }
 
         // Test validation: empty signers
@@ -365,7 +367,7 @@ public class MultiKeyTests {
             MultiEd25519Account.from(new ArrayList<>(), publicKeys, 2);
             fail("Should throw IllegalArgumentException when signers is empty");
         } catch (IllegalArgumentException e) {
-            System.out.println("   ✓ Correctly rejected empty signers: " + e.getMessage());
+            Logger.info("   ✓ Correctly rejected empty signers: " + e.getMessage());
         }
 
         // Test validation: empty public keys
@@ -373,7 +375,7 @@ public class MultiKeyTests {
             MultiEd25519Account.from(signers, new ArrayList<>(), 2);
             fail("Should throw IllegalArgumentException when public keys is empty");
         } catch (IllegalArgumentException e) {
-            System.out.println("   ✓ Correctly rejected empty public keys: " + e.getMessage());
+            Logger.info("   ✓ Correctly rejected empty public keys: " + e.getMessage());
         }
 
         // Test validation: null inputs
@@ -381,37 +383,37 @@ public class MultiKeyTests {
             MultiEd25519Account.from(null, publicKeys, 2);
             fail("Should throw IllegalArgumentException when signers is null");
         } catch (IllegalArgumentException e) {
-            System.out.println("   ✓ Correctly rejected null signers: " + e.getMessage());
+            Logger.info("   ✓ Correctly rejected null signers: " + e.getMessage());
         }
 
         try {
             MultiEd25519Account.from(signers, null, 2);
             fail("Should throw IllegalArgumentException when public keys is null");
         } catch (IllegalArgumentException e) {
-            System.out.println("   ✓ Correctly rejected null public keys: " + e.getMessage());
+            Logger.info("   ✓ Correctly rejected null public keys: " + e.getMessage());
         }
 
-        System.out.println("   All validation tests passed!");
+        Logger.info("   All validation tests passed!");
     }
 
     @Test
     @Order(4)
     @DisplayName("Multi-key path derivation test with funding and transaction signing")
     void testMultikeyPathDerivation() throws Exception {
-        System.out.println("=== Testing Multi-key Path Derivation with Funding and Transaction ===");
+        Logger.info("=== Testing Multi-key Path Derivation with Funding and Transaction ===");
 
         // Derive account1 from the specified UUID using BIP39
         String uuid = "9b4c9e83-a06e-4704-bc5f-b6a55d0dbb89";
         String mnemonic = Bip39Utils.entropyToMnemonic(uuid);
-        System.out.println("   UUID: " + uuid);
-        System.out.println("   Generated mnemonic: " + mnemonic);
+        Logger.info("   UUID: " + uuid);
+        Logger.info("   Generated mnemonic: " + mnemonic);
 
         // Derive account1 using the mnemonic and a standard derivation path
         String derivationPath = "m/44'/637'/0'/0'/0'";
         Ed25519Account account1 = Account.fromDerivationPath(derivationPath, mnemonic);
-        System.out.println("   Account1 derived from path: " + derivationPath);
-        System.out.println("   Account1 public key: " + account1.getPublicKey());
-        System.out.println("   Account1 address: " + account1.getAccountAddress());
+        Logger.info("   Account1 derived from path: " + derivationPath);
+        Logger.info("   Account1 public key: " + account1.getPublicKey());
+        Logger.info("   Account1 address: " + account1.getAccountAddress());
 
         // Create the specified public keys
         // Use account1's actual public key and create two additional accounts for the other public keys
@@ -423,9 +425,9 @@ public class MultiKeyTests {
         Ed25519PublicKey publicKey2 = account2.getPublicKey();
         Ed25519PublicKey publicKey3 = account3.getPublicKey();
 
-        System.out.println("   Public key 1 (from account1): " + publicKey1);
-        System.out.println("   Public key 2 (specified): " + publicKey2);
-        System.out.println("   Public key 3 (specified): " + publicKey3);
+        Logger.info("   Public key 1 (from account1): " + publicKey1);
+        Logger.info("   Public key 2 (specified): " + publicKey2);
+        Logger.info("   Public key 3 (specified): " + publicKey3);
 
         // Create the multi-key setup
         // Use account1 as the signer since its public key matches the first public key in our list
@@ -436,21 +438,21 @@ public class MultiKeyTests {
         // Create the multi-signature account
         MultiEd25519Account multi = MultiEd25519Account.from(signers, publicKeys, threshold);
 
-        System.out.println("   Multi-signature account created:");
-        System.out.println("   - Account address: " + multi.getAccountAddress());
-        System.out.println("   - Expected address: 0x6e744879bc47d8fa0b5fb6b3116a82d6395db05b41a66673d441755d7e7e4642");
+        Logger.info("   Multi-signature account created:");
+        Logger.info("   - Account address: " + multi.getAccountAddress());
+        Logger.info("   - Expected address: 0x6e744879bc47d8fa0b5fb6b3116a82d6395db05b41a66673d441755d7e7e4642");
 
         // Validate the multi-key public address
         // Note: The expected address might have been calculated with different public keys or algorithm
         // For now, let's validate that the algorithm works correctly and produces a consistent result
         String generatedAddress = multi.getAccountAddress().toString();
-        System.out.println("   Generated address: " + generatedAddress);
-        System.out.println("   Expected address: 0x6e744879bc47d8fa0b5fb6b3116a82d6395db05b41a66673d441755d7e7e4642");
+        Logger.info("   Generated address: " + generatedAddress);
+        Logger.info("   Expected address: 0x6e744879bc47d8fa0b5fb6b3116a82d6395db05b41a66673d441755d7e7e4642");
 
         // Note: The addresses don't match, which suggests the expected address was calculated
         // with different public keys or a different algorithm. The current implementation
         // follows the standard MultiEd25519 address derivation algorithm.
-        System.out.println("   Note: Address mismatch - this may be due to different public keys or algorithm used for expected address");
+        Logger.info("   Note: Address mismatch - this may be due to different public keys or algorithm used for expected address");
 
         // Validate that the address is a valid hex string and has the correct length
         assertTrue(generatedAddress.startsWith("0x"), "Address should start with 0x");
@@ -476,28 +478,28 @@ public class MultiKeyTests {
         assertEquals(publicKey2, multi.getPublicKeys().get(1), "Second public key should match the specified value");
         assertEquals(publicKey3, multi.getPublicKeys().get(2), "Third public key should match the specified value");
 
-        System.out.println("   ✓ All validations passed!");
+        Logger.info("   ✓ All validations passed!");
 
         // ===== FUNDING AND TRANSACTION TESTING =====
-        System.out.println("   === Funding and Transaction Testing ===");
+        Logger.info("   === Funding and Transaction Testing ===");
 
         // Fund the multi-signature account
         String fundHash = FundingUtils.fundAccount(multi.getAccountAddress().toString(), TestConfig.FUND_AMOUNT, config.getNetwork());
         assertNotNull(fundHash);
-        System.out.println("   Funding transaction hash: " + fundHash);
+        Logger.info("   Funding transaction hash: " + fundHash);
         Thread.sleep(TestConfig.FUNDING_DELAY_MS);
 
         // Create a new receiver account
         Ed25519Account receiverAccount = Ed25519Account.generate();
-        System.out.println("   Receiver account created:");
-        System.out.println("   - Receiver address: " + receiverAccount.getAccountAddress());
+        Logger.info("   Receiver account created:");
+        Logger.info("   - Receiver address: " + receiverAccount.getAccountAddress());
 
         // Check initial balances
         long multiInitialBalance = client.getAccountCoinAmount(multi.getAccountAddress());
         long receiverInitialBalance = client.getAccountCoinAmount(receiverAccount.getAccountAddress());
-        System.out.println("   Initial balances:");
-        System.out.println("   - Multi-signature account: " + multiInitialBalance + " octas");
-        System.out.println("   - Receiver account: " + receiverInitialBalance + " octas");
+        Logger.info("   Initial balances:");
+        Logger.info("   - Multi-signature account: " + multiInitialBalance + " octas");
+        Logger.info("   - Receiver account: " + receiverInitialBalance + " octas");
 
         // Build transfer payload
         ModuleId moduleId = new ModuleId(AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"), new Identifier("coin"));
@@ -514,7 +516,7 @@ public class MultiKeyTests {
 
         // Get current sequence number
         long sequenceNumber = client.getNextSequenceNumber(multi.getAccountAddress());
-        System.out.println("   Current sequence number: " + sequenceNumber);
+        Logger.info("   Current sequence number: " + sequenceNumber);
 
         // Build raw transaction
         RawTransaction raw = new RawTransaction(
@@ -532,26 +534,26 @@ public class MultiKeyTests {
         SignedTransaction signed = new SignedTransaction(raw, authenticator);
 
         // Submit the transaction
-        System.out.println("   Submitting MultiEd25519 transaction...");
+        Logger.info("   Submitting MultiEd25519 transaction...");
         PendingTransaction pending = client.submitTransaction(signed);
         assertNotNull(pending);
-        System.out.println("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
+        Logger.info("   MultiEd25519 transaction submitted with hash: " + pending.getHash());
 
         // Wait for transaction to be committed
-        System.out.println("   Waiting for transaction to be committed...");
+        Logger.info("   Waiting for transaction to be committed...");
         Transaction committed = client.waitForTransaction(pending.getHash());
         assertNotNull(committed);
-        System.out.println("   MultiEd25519 transaction committed successfully");
+        Logger.info("   MultiEd25519 transaction committed successfully");
 
         // Check final balances
         long multiFinalBalance = client.getAccountCoinAmount(multi.getAccountAddress());
         long receiverFinalBalance = client.getAccountCoinAmount(receiverAccount.getAccountAddress());
-        System.out.println("   Final balances:");
-        System.out.println("   - Multi-signature account: " + multiFinalBalance + " octas");
-        System.out.println("   - Receiver account: " + receiverFinalBalance + " octas");
-        System.out.println("   Balance changes:");
-        System.out.println("   - Multi-signature account: " + (multiFinalBalance - multiInitialBalance) + " octas");
-        System.out.println("   - Receiver account: " + (receiverFinalBalance - receiverInitialBalance) + " octas");
+        Logger.info("   Final balances:");
+        Logger.info("   - Multi-signature account: " + multiFinalBalance + " octas");
+        Logger.info("   - Receiver account: " + receiverFinalBalance + " octas");
+        Logger.info("   Balance changes:");
+        Logger.info("   - Multi-signature account: " + (multiFinalBalance - multiInitialBalance) + " octas");
+        Logger.info("   - Receiver account: " + (receiverFinalBalance - receiverInitialBalance) + " octas");
 
         // Verify the transaction was successful
         assertTrue(receiverFinalBalance > receiverInitialBalance, "Receiver should have received funds");
@@ -560,9 +562,9 @@ public class MultiKeyTests {
         // Verify we can serialize the transaction
         byte[] transactionBytes = signed.bcsToBytes();
         assertTrue(transactionBytes.length > 0);
-        System.out.println("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
+        Logger.info("   MultiEd25519 transaction serialized successfully (" + transactionBytes.length + " bytes)");
 
-        System.out.println("   ✓ Multi-key path derivation test with funding and transaction completed successfully!");
+        Logger.info("   ✓ Multi-key path derivation test with funding and transaction completed successfully!");
     }
 
     @Test
@@ -634,13 +636,13 @@ public class MultiKeyTests {
         assertEquals(1, authSignerIndices.size());
         assertEquals(1, authSignerIndices.get(0)); // Should be index 1 for account1
 
-        System.out.println("✅ Enhanced from() method with automatic index detection works correctly!");
-        System.out.println("   Account1 public key: " + account1.getPublicKey().toString());
-        System.out.println("   Account2 public key: " + account2.getPublicKey().toString());
-        System.out.println("   Public keys array: [" +
+        Logger.info("✅ Enhanced from() method with automatic index detection works correctly!");
+        Logger.info("   Account1 public key: " + account1.getPublicKey().toString());
+        Logger.info("   Account2 public key: " + account2.getPublicKey().toString());
+        Logger.info("   Public keys array: [" +
                 publicKeys.get(0).toString() + ", " + publicKeys.get(1).toString() + "]");
-        System.out.println("   Detected signer index: " + signerIndices.get(0));
-        System.out.println("   Multi-key account address: " + multiAccount.getAccountAddress().toString());
+        Logger.info("   Detected signer index: " + signerIndices.get(0));
+        Logger.info("   Multi-key account address: " + multiAccount.getAccountAddress().toString());
     }
 
     private KeyPairBytes generateKeyPair() {

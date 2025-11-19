@@ -15,16 +15,6 @@ A comprehensive Java SDK for interacting with the Aptos blockchain, featuring ad
 
 ### Repository Configuration
 
-Add the GitHub Packages repository to your `pom.xml`:
-
-```xml
-<repositories>
-  <repository>
-    <id>github</id>
-    <url>https://maven.pkg.github.com/aptos-labs/japtos</url>
-  </repository>
-</repositories>
-```
 
 ### Dependency
 
@@ -32,13 +22,11 @@ Add the Japtos SDK dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-  <groupId>com.aptos-labs</groupId>
+  <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.6</version>
 </dependency>
 ```
-
-> **⚠️ Authentication Required**: This repository requires GitHub authentication. For detailed setup instructions, see the [GitHub Packages Maven Registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 
 ## 🔧 Manual Installation
 
@@ -99,6 +87,65 @@ AptosConfig config = AptosConfig.builder()
         .network(AptosConfig.Network.MAINNET)  // or TESTNET, DEVNET, LOCALNET
         .build();
         AptosClient client = new AptosClient(config);
+```
+
+### 📊 Logging Configuration
+
+The Japtos SDK includes a built-in logging system that provides detailed information about SDK operations. You can configure the logging level when initializing the client:
+
+```java
+import com.aptoslabs.japtos.client.AptosClient;
+import com.aptoslabs.japtos.api.AptosConfig;
+import com.aptoslabs.japtos.utils.LogLevel;
+
+// Configure with specific log level
+AptosConfig config = AptosConfig.builder()
+        .network(AptosConfig.Network.DEVNET)
+        .logLevel(LogLevel.INFO)  // Available: DEBUG, INFO, WARN, ERROR
+        .build();
+
+AptosClient client = new AptosClient(config);
+// Output: [2025-11-13 11:09:32.851] [INFO] Japtos SDK v1.1.6 initialized [DEVNET] - Support: https://github.com/aptos-labs/japtos
+```
+
+**Log Levels:**
+- `LogLevel.DEBUG` - Detailed information for debugging (default)
+- `LogLevel.INFO` - General information messages
+- `LogLevel.WARN` - Warning messages
+- `LogLevel.ERROR` - Only error messages
+
+**Example with different log levels:**
+
+```java
+// Production environment - only show warnings and errors
+AptosConfig prodConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.MAINNET)
+        .logLevel(LogLevel.WARN)
+        .build();
+
+// Development environment - show all logs
+AptosConfig devConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.DEVNET)
+        .logLevel(LogLevel.DEBUG)
+        .build();
+
+// Custom network with error-only logging
+AptosConfig customConfig = AptosConfig.builder()
+        .fullnode("https://custom.fullnode.example.com")
+        .logLevel(LogLevel.ERROR)
+        .build();
+```
+
+**Changing log level at runtime:**
+
+```java
+import com.aptoslabs.japtos.utils.Logger;
+
+// Change log level after initialization
+Logger.setLogLevel(LogLevel.DEBUG);
+
+// Get current log level
+LogLevel currentLevel = Logger.getLogLevel();
 ```
 
 ## 📚 Usage Examples
@@ -368,6 +415,100 @@ mvn test -Dtest=MultiKeyTests#testMultikeyPathDerivation
 
 - `AptosClient`: Main client for API interactions
 - `HttpClient`: HTTP client interface
+
+### 🔧 Working with Move Option Types
+
+**Example Move module with optional parameters:**
+
+```move
+module example::optional_params {
+    use std::option::{Self, Option};
+    use std::string::String;
+    
+    public entry fun test_options(
+        account: &signer,
+        u64_opt: Option<u64>,
+        string_opt: Option<String>,
+        bool_opt: Option<bool>,
+        address_opt: Option<address>
+    ) {
+        // Function accepts optional parameters
+    }
+    
+    public entry fun test_mixed(
+        account: &signer,
+        required_u64: u64,
+        optional_string: Option<String>,
+        required_bool: bool,
+        optional_u64: Option<u64>
+    ) {
+        // Mix of required and optional parameters
+    }
+}
+```
+
+**Calling Move functions with optional parameters from Java:**
+
+```java
+import com.aptoslabs.japtos.types.MoveOption;
+import com.aptoslabs.japtos.types.TransactionArgument;
+
+// Example 1: All optional parameters with Some values
+List<TransactionArgument> args = Arrays.asList(
+    MoveOption.u64(12345L),                    // Some(12345)
+    MoveOption.string("hello from japtos"),     // Some("hello from japtos")
+    MoveOption.bool(true),                      // Some(true)
+    MoveOption.address(accountAddress)          // Some(0x123...)
+);
+
+// Example 2: Mix of Some and None values
+List<TransactionArgument> args = Arrays.asList(
+    MoveOption.u64(null),                       // None
+    MoveOption.string("optional value"),        // Some("optional value")
+    MoveOption.bool(null),                      // None
+    MoveOption.address(null)                    // None
+);
+
+// Example 3: Mixed required and optional parameters
+AccountAddress recipient = AccountAddress.fromHex("0x1");
+List<TransactionArgument> args = Arrays.asList(
+    new TransactionArgument.U64(456L),          // required u64
+    MoveOption.string("optional value"),        // optional string: Some("optional value")
+    new TransactionArgument.Bool(false),        // required bool
+    MoveOption.u64(null)                        // optional u64: None
+);
+
+// Build and submit transaction
+ModuleId moduleId = new ModuleId(moduleAddress, new Identifier("optional_params"));
+EntryFunctionPayload payload = new EntryFunctionPayload(
+    moduleId,
+    new Identifier("test_mixed"),
+    Collections.emptyList(),
+    args
+);
+
+// MoveOption factory methods for all types
+MoveOption.u8((byte) 1);                       // Some(1)
+MoveOption.u16((short) 100);                   // Some(100)
+MoveOption.u32(1000);                          // Some(1000)
+MoveOption.u64(10000L);                        // Some(10000)
+MoveOption.u128(BigInteger.valueOf(12345));    // Some(12345)
+MoveOption.u256(new BigInteger("999999"));     // Some(999999)
+MoveOption.bool(true);                         // Some(true)
+MoveOption.string("hello");                    // Some("hello")
+MoveOption.address(accountAddr);               // Some(address)
+MoveOption.u8Vector(new byte[]{1, 2, 3});     // Some([1,2,3])
+
+// Working with MoveOption values
+MoveOption<TransactionArgument.U64> amount = MoveOption.u64(1000L);
+if (amount.isSome()) {
+    TransactionArgument.U64 value = amount.unwrap();
+    System.out.println("Amount: " + value.getValue());
+}
+
+// Convert to Java Optional
+Optional<TransactionArgument.U64> javaOpt = amount.toOptional();
+```
 
 ### ⛽ Gas Station (Sponsored Transactions)
 

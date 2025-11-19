@@ -5,50 +5,55 @@ import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.utils.HexUtils;
+import com.aptoslabs.japtos.utils.Logger;
 
 /**
  * Aptos Java SDK - Main demonstration class
  */
 public class App {
     public static void main(String[] args) {
-        System.out.println("=== Aptos Java SDK Demo ===\n");
+        Logger.info("=== Aptos Java SDK Demo ===");
 
         try {
             // 1. Account Management Demo
-            System.out.println("1. Account Management:");
+            Logger.info("1. Account Management:");
             Ed25519Account account = Account.generate();
-            System.out.println("   Generated account address: " + account.getAccountAddress());
-            System.out.println("   Public key: " + account.getPublicKeyHex());
-            System.out.println("   Private key: " + account.getPrivateKeyHex());
+            Logger.info("   Generated account address: %s", account.getAccountAddress());
+            Logger.info("   Public key: %s", account.getPublicKeyHex());
+            Logger.debug("   Private key: %s", account.getPrivateKeyHex());
 
             // 2. Message Signing Demo
-            System.out.println("\n2. Message Signing:");
+            Logger.info("");
+            Logger.info("2. Message Signing:");
             String message = "Hello, Aptos!";
             byte[] messageBytes = message.getBytes();
             Signature signature = account.sign(messageBytes);
-            System.out.println("   Message: " + message);
-            System.out.println("   Signature: " + signature.toString());
+            Logger.info("   Message: %s", message);
+            Logger.debug("   Signature: %s", signature.toString());
 
             boolean isValid = account.verifySignature(messageBytes, signature);
-            System.out.println("   Signature valid: " + isValid);
+            Logger.info("   Signature valid: %s", isValid);
 
             // 3. Hex Utilities Demo
-            System.out.println("\n3. Hex Utilities:");
+            Logger.info("");
+            Logger.info("3. Hex Utilities:");
             byte[] testBytes = {0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xAB, (byte) 0xCD, (byte) 0xEF};
             String hex = HexUtils.bytesToHex(testBytes);
-            System.out.println("   Bytes to hex: " + hex);
+            Logger.debug("   Bytes to hex: %s", hex);
             byte[] convertedBytes = HexUtils.hexToBytes(hex);
-            System.out.println("   Hex to bytes: " + HexUtils.bytesToHex(convertedBytes));
+            Logger.debug("   Hex to bytes: %s", HexUtils.bytesToHex(convertedBytes));
 
             // 4. Account Address Demo
-            System.out.println("\n4. Account Address:");
+            Logger.info("");
+            Logger.info("4. Account Address:");
             AccountAddress zeroAddress = AccountAddress.zero();
-            System.out.println("   Zero address: " + zeroAddress);
-            System.out.println("   Is zero: " + zeroAddress.isZero());
+            Logger.info("   Zero address: %s", zeroAddress);
+            Logger.info("   Is zero: %s", zeroAddress.isZero());
 
             // 5. Client Demo (commented out to avoid network calls)
-            System.out.println("\n5. Client Operations:");
-            System.out.println("   Note: Network operations are commented out to avoid external dependencies");
+            Logger.info("");
+            Logger.info("5. Client Operations:");
+            Logger.info("   Note: Network operations are commented out to avoid external dependencies");
             /*
             AptosConfig config = AptosConfig.builder()
                 .network(AptosConfig.Network.DEVNET)
@@ -57,19 +62,19 @@ public class App {
             
             // Get account info
             var accountInfo = client.getAccount(account.getAccountAddress());
-            System.out.println("   Account sequence number: " + accountInfo.getSequenceNumber());
+            Logger.info("   Account sequence number: %s", accountInfo.getSequenceNumber());
             
             // Get ledger info
             var ledgerInfo = client.getLedgerInfo();
-            System.out.println("   Chain ID: " + ledgerInfo.getChainId());
-            System.out.println("   Ledger version: " + ledgerInfo.getLedgerVersion());
+            Logger.info("   Chain ID: %s", ledgerInfo.getChainId());
+            Logger.info("   Ledger version: %s", ledgerInfo.getLedgerVersion());
             */
 
-            System.out.println("\n=== Demo completed successfully! ===");
+            Logger.info("");
+            Logger.info("=== Demo completed successfully! ===");
 
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
+            Logger.error("Error in demo", e);
         }
     }
 }

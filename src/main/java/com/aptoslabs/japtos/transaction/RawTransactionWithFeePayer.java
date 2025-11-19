@@ -3,6 +3,7 @@ package com.aptoslabs.japtos.transaction;
 import com.aptoslabs.japtos.bcs.Serializable;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AccountAddress;
+import com.aptoslabs.japtos.utils.Logger;
 import com.aptoslabs.japtos.types.TransactionPayload;
 
 import java.io.IOException;
@@ -73,6 +74,7 @@ public class RawTransactionWithFeePayer implements Serializable {
             serialize(serializer);
             return serializer.toByteArray();
         } catch (IOException e) {
+            Logger.error("Serialization failed for RawTransactionWithFeePayer", e);
             throw new RuntimeException("Serialization failed", e);
         }
     }

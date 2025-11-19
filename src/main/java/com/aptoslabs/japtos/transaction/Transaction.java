@@ -3,6 +3,7 @@ package com.aptoslabs.japtos.transaction;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.types.TransactionPayload;
+import com.aptoslabs.japtos.utils.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -95,6 +96,7 @@ public class Transaction {
             serialize(serializer);
             return outputStream.toByteArray();
         } catch (IOException e) {
+            Logger.error("Failed to serialize transaction", e);
             throw new RuntimeException("Failed to serialize transaction", e);
         }
     }

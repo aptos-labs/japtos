@@ -73,16 +73,8 @@ public class EntryFunctionPayload implements TransactionPayload {
         serializer.serializeU32AsUleb128(arguments.size());
         for (TransactionArgument argument : arguments) {
             // Serialize the argument as length-prefixed bytes (like serializeForEntryFunction in TS SDK)
-            if (argument instanceof TransactionArgument.AccountAddress) {
-                byte[] argBytes = ((TransactionArgument.AccountAddress) argument).serializeForEntryFunction();
-                serializer.serializeBytes(argBytes);
-            } else if (argument instanceof TransactionArgument.U64) {
-                byte[] argBytes = ((TransactionArgument.U64) argument).serializeForEntryFunction();
-                serializer.serializeBytes(argBytes);
-            } else {
-                byte[] argBytes = argument.bcsToBytes();
-                serializer.serializeBytes(argBytes);
-            }
+            byte[] argBytes = argument.serializeForEntryFunction();
+            serializer.serializeBytes(argBytes);
         }
     }
 

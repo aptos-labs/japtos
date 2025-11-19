@@ -5,6 +5,7 @@ import com.aptoslabs.japtos.client.HttpClientImpl;
 import com.aptoslabs.japtos.client.dto.HttpResponse;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
+import com.aptoslabs.japtos.utils.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -66,6 +67,7 @@ public class GasStationClient {
                         try {
                             return bytesToIntegerList(auth.bcsToBytes());
                         } catch (Exception e) {
+                            Logger.error("Failed to serialize authenticator bytes", e);
                             throw new RuntimeException(e);
                         }
                     })
@@ -139,6 +141,7 @@ public class GasStationClient {
         try {
             return (byte[]) transaction.getClass().getMethod("bcsToBytes").invoke(transaction);
         } catch (Exception e) {
+            Logger.error("Failed to extract bytes from transaction", e);
             throw new GasStationClientException("Failed to extract bytes from transaction: " + e.getMessage());
         }
     }

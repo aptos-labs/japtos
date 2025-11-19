@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos;
 
+import com.aptoslabs.japtos.utils.Logger;
+
 import com.aptoslabs.japtos.utils.Bip39Utils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,8 +29,8 @@ public class Bip39UtilsTests {
         assertEquals(expectedMnemonic, actualMnemonic,
                 "Mnemonic generation should match expected phrase");
 
-        System.out.println("Input entropy: " + entropy);
-        System.out.println("Generated mnemonic: " + actualMnemonic);
+        Logger.info("Input entropy: " + entropy);
+        Logger.info("Generated mnemonic: " + actualMnemonic);
     }
 
     @Test
@@ -47,8 +49,8 @@ public class Bip39UtilsTests {
         assertEquals(expectedMnemonic, actualMnemonic,
                 "Mnemonic generation should match expected phrase");
 
-        System.out.println("Input entropy: " + entropy);
-        System.out.println("Generated mnemonic: " + actualMnemonic);
+        Logger.info("Input entropy: " + entropy);
+        Logger.info("Generated mnemonic: " + actualMnemonic);
     }
 
 }

@@ -3,9 +3,30 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.aptoslabs</groupId>
+  <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.2.0-SNAPSHOT</version>
+  <version>1.1.8</version>
+
+
+  <developers>
+    <developer>
+      <email>rrigoni@gmail.com</email>
+      <id>rrigoni</id>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/aptos-labs/japtos</url>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>https://github.com/aptos-labs/japtos</distribution>
+      <comments>A permissive free software license issued by the Apache Software Foundation.</comments>
+    </license>
+  </licenses>
 
   <name>japtos</name>
   <description>Aptos Java SDK for Android</description>
@@ -16,7 +37,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <okhttp.version>4.12.0</okhttp.version>
     <gson.version>2.10.1</gson.version>
-    <bouncycastle.version>1.77</bouncycastle.version>
+    <bouncycastle.version>1.82</bouncycastle.version>
     <slf4j.version>2.0.9</slf4j.version>
   </properties>
 
@@ -91,6 +112,83 @@
   </dependencies>
 
   <build>
+    <plugins>
+
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version> <!-- Use a recent version -->
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <file>src/main/java/com/aptoslabs/japtos/core/Constants.java</file>
+              <replacements>
+                <replacement>
+                  <token>@@PROJECT_VERSION</token>
+                  <value>${project.version}</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+            <configuration>
+               <keyname>FA3B5E4A</keyname>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.9.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>deploy</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+            <additionalOptions>-Xdoclint:none</additionalOptions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>deploy</phase>
+            <goals><goal>jar</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
@@ -132,37 +230,8 @@
           <version>3.6.1</version>
         </plugin>
 
-        <!-- Distribution Management -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.2.4</version>
-          <executions>
-            <execution>
-              <id>sign-artifacts</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>sign</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
       </plugins>
     </pluginManagement>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <name>GitHub OWNER Apache Maven Packages</name>
-      <url>https://maven.pkg.github.com/aptos-labs/japtos</url>
-    </repository>
-  </distributionManagement>
 
 </project>

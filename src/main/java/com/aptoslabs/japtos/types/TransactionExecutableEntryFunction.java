@@ -54,8 +54,13 @@ public class TransactionExecutableEntryFunction implements TransactionExecutable
         if (prebuiltPayload != null) {
             // Reuse EntryFunctionPayload bytes, dropping its TransactionPayload variant (EntryFunction = 2)
             byte[] bytes = prebuiltPayload.bcsToBytes();
-            if (bytes.length == 0) throw new IOException("EntryFunctionPayload serialized empty");
-            // Expect single-byte 0x02 for EntryFunction variant
+            if (bytes.length == 0) {
+                throw new IOException("EntryFunctionPayload serialized empty");
+            }
+            if (bytes[0] != 0x02) {
+                throw new IOException("Expected EntryFunction variant (0x02), got: 0x" + String.format("%02X", bytes[0]));
+            }
+            // Variant 2 is single-byte in ULEB128, validated above
             int offset = 1;
             byte[] inner = Arrays.copyOfRange(bytes, offset, bytes.length);
             serializer.writeBytesDirect(inner);
@@ -71,24 +76,8 @@ public class TransactionExecutableEntryFunction implements TransactionExecutable
         }
         serializer.serializeU32AsUleb128(arguments.size());
         for (TransactionArgument argument : arguments) {
-            // For known primitives, use entry-function friendly bytes (no TransactionArgument tag)
-            byte[] argBytes;
-            if (argument instanceof TransactionArgument.AccountAddress) {
-                argBytes = ((TransactionArgument.AccountAddress) argument).serializeForEntryFunction();
-            } else if (argument instanceof TransactionArgument.U64) {
-                argBytes = ((TransactionArgument.U64) argument).serializeForEntryFunction();
-            } else if (argument instanceof TransactionArgument.U8) {
-                com.aptoslabs.japtos.bcs.Serializer s = new com.aptoslabs.japtos.bcs.Serializer();
-                s.serializeU8(((TransactionArgument.U8) argument).getValue());
-                argBytes = s.toByteArray();
-            } else if (argument instanceof TransactionArgument.Bool) {
-                com.aptoslabs.japtos.bcs.Serializer s = new com.aptoslabs.japtos.bcs.Serializer();
-                s.serializeBool(((TransactionArgument.Bool) argument).getValue());
-                argBytes = s.toByteArray();
-            } else {
-                // Fallback: serialize as raw BCS then wrap as bytes
-                argBytes = argument.bcsToBytes();
-            }
+            // Use serializeForEntryFunction() to get raw bytes without variant tags
+            byte[] argBytes = argument.serializeForEntryFunction();
             serializer.serializeBytes(argBytes);
         }
     }
