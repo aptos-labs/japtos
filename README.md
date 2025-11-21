@@ -15,6 +15,19 @@ A comprehensive Java SDK for interacting with the Aptos blockchain, featuring ad
 
 ### Repository Configuration
 
+The Japtos SDK is published to Maven Central. No additional repository configuration is needed if you're using Maven Central (which is the default).
+
+If you need to explicitly configure the repository, add this to your `pom.xml`:
+
+```xml
+<repositories>
+    <repository>
+        <id>central</id>
+        <name>Maven Central</name>
+        <url>https://repo1.maven.org/maven2</url>
+    </repository>
+</repositories>
+```
 
 ### Dependency
 
@@ -24,7 +37,7 @@ Add the Japtos SDK dependency to your `pom.xml`:
 <dependency>
   <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.6</version>
+  <version>1.1.8</version>
 </dependency>
 ```
 
@@ -580,6 +593,46 @@ PendingTransaction pending = client.submitTransaction(signedTx);
 ```
 
 The transaction will be submitted with the fee payer covering gas costs. Your account's APT balance remains unchanged.
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Transaction submission fails with "sequence number too old"**
+- Ensure you're using the latest sequence number from the blockchain
+- Check that no other transactions are pending for the same account
+- Use `client.getNextSequenceNumber(address)` to get the current sequence number
+
+**"Account not found" errors**
+- New accounts need to be funded before they can send transactions
+- Use the faucet on devnet/testnet to fund accounts
+- Check that the account address is correctly formatted (32 bytes, hex string)
+
+**BCS serialization errors**
+- Ensure all transaction arguments match the expected Move types
+- Check that optional parameters use `MoveOption` wrapper classes
+- Verify that addresses are properly formatted AccountAddress objects
+
+**Gas station transaction failures**
+- Verify your API key is valid and has sufficient balance
+- Check that the fee payer address matches your gas station configuration
+- Ensure you're signing with the correct domain prefix for fee payer transactions
+
+**Network connection issues**
+- Verify the fullnode URL is correct and accessible
+- Check network connectivity and firewall settings
+- For custom networks, ensure the endpoint supports the Aptos REST API
+
+**Android compatibility issues**
+- The SDK uses BouncyCastle which is Android-compatible
+- Ensure you're using the correct JDK version (Java 8+)
+- Check that ProGuard rules preserve necessary classes if using code obfuscation
+
+### Getting Help
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/aptos-labs/japtos/issues)
+- **Documentation**: Check the [Aptos Documentation](https://aptos.dev/)
+- **Community**: Join the [Aptos Discord](https://discord.gg/aptoslabs)
 
 ## 🤝 Contributing
 
