@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run unit tests
+        run: mvn verify -P unit-tests -Dgpg.skip=true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/site/jacoco/jacoco.xml
+          flags: unit
+          fail_ci_if_error: true
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Aptos CLI
+        run: |
+          curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Start localnet
+        run: aptos node run-local-testnet --with-faucet > /tmp/localnet.log 2>&1 &
+
+      - name: Wait for localnet
+        run: |
+          echo "Waiting for localnet..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/v1 > /dev/null 2>&1; then
+              echo "Localnet ready after ${i}x2s"
+              exit 0
+            fi
+            echo "  attempt $i/30..."
+            sleep 2
+          done
+          echo "Localnet failed to start. Log:"
+          cat /tmp/localnet.log
+          exit 1
+
+      - name: Run integration tests
+        run: mvn verify -P integration-tests -Dgpg.skip=true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/site/jacoco/jacoco.xml
+          flags: integration
+          fail_ci_if_error: true
