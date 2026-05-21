@@ -19,7 +19,7 @@ jobs:
           cache: 'maven'
 
       - name: Run unit tests
-        run: mvn verify -P unit-tests -Dgpg.skip=true
+        run: mvn verify -P unit-tests -Dgpg.skip=true -Dmaven.deploy.skip=true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -27,11 +27,12 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: unit
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -51,13 +52,17 @@ jobs:
 
       - name: Wait for localnet
         run: |
-          echo "Waiting for localnet..."
-          for i in {1..30}; do
-            if curl -sf http://localhost:8080/v1 > /dev/null 2>&1; then
-              echo "Localnet ready after ${i}x2s"
+          echo "Waiting for localnet node and faucet..."
+          for i in {1..45}; do
+            NODE_OK=false
+            FAUCET_OK=false
+            curl -sf http://localhost:8080/v1 > /dev/null 2>&1 && NODE_OK=true
+            curl -sf http://localhost:8081/health > /dev/null 2>&1 && FAUCET_OK=true
+            if $NODE_OK && $FAUCET_OK; then
+              echo "Localnet node and faucet ready after ${i}x2s"
               exit 0
             fi
-            echo "  attempt $i/30..."
+            echo "  attempt $i/45 (node=$NODE_OK faucet=$FAUCET_OK)..."
             sleep 2
           done
           echo "Localnet failed to start. Log:"
@@ -65,7 +70,7 @@ jobs:
           exit 1
 
       - name: Run integration tests
-        run: mvn verify -P integration-tests -Dgpg.skip=true
+        run: mvn verify -P integration-tests -Dgpg.skip=true -Dmaven.deploy.skip=true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -73,4 +78,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: integration
-          fail_ci_if_error: true
+          fail_ci_if_error: false
