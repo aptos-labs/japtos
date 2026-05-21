@@ -19,8 +19,7 @@ jobs:
           cache: 'maven'
 
       - name: Run unit tests
-        run: mvn verify -P unit-tests -Dgpg.skip=true -Dmaven.deploy.skip=true
-
+        run: mvn verify -P unit-tests -Dgpg.skip=true
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
@@ -70,8 +69,7 @@ jobs:
           exit 1
 
       - name: Run integration tests
-        run: mvn verify -P integration-tests -Dgpg.skip=true -Dmaven.deploy.skip=true
-
+        run: mvn verify -P integration-tests -Dgpg.skip=true
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:

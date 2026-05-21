@@ -4,7 +4,6 @@ import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.AptosClient;
 import com.aptoslabs.japtos.utils.LogLevel;
 import com.aptoslabs.japtos.utils.Logger;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Tests for the logging functionality
  */
-@Tag("integration")
 public class LoggingTest {
 
     @Test
