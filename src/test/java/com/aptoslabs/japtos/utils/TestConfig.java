@@ -7,8 +7,15 @@ import com.aptoslabs.japtos.api.AptosConfig;
  */
 public class TestConfig {
 
-    // Default network (can be changed for testing)
-    public static final AptosConfig.Network DEFAULT_NETWORK = AptosConfig.Network.TESTNET;
+    public static final AptosConfig.Network DEFAULT_NETWORK = resolveNetwork();
+
+    private static AptosConfig.Network resolveNetwork() {
+        String prop = System.getProperty("APTOS_NETWORK");
+        if (prop != null) {
+            return AptosConfig.Network.valueOf(prop);
+        }
+        return AptosConfig.Network.TESTNET;
+    }
 
     // Test amounts
     public static final String FUND_AMOUNT = "100000000"; // 100 APT
