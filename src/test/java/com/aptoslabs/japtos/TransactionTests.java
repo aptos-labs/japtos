@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests for real transaction signing on Aptos localnet
  */
+@Tag("integration")
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TransactionTests {

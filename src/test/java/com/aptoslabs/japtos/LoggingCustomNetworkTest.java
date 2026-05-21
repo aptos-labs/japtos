@@ -3,11 +3,13 @@ package com.aptoslabs.japtos;
 import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.client.AptosClient;
 import com.aptoslabs.japtos.utils.LogLevel;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * Test logging with custom network configuration
  */
+@Tag("integration")
 public class LoggingCustomNetworkTest {
 
     @Test

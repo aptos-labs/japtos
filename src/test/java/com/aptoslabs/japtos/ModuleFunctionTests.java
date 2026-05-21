@@ -23,6 +23,7 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ModuleFunctionTests {

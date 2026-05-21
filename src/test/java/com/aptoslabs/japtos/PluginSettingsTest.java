@@ -4,6 +4,7 @@ import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.gasstation.GasStationSettings;
 import com.aptoslabs.japtos.plugin.PluginSettings;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for the strongly-typed PluginSettings system.
  */
+@Tag("integration")
 public class PluginSettingsTest {
     
     @Test
