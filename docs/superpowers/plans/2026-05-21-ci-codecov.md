@@ -270,10 +270,10 @@ For `LoggingTest`, `LoggingCustomNetworkTest`, and `PluginSettingsTest`, add `im
 - [ ] **Step: Verify unit profile excludes all tagged tests**
 
 ```bash
-mvn test -P unit-tests 2>&1 | grep -E "Tests run:|BUILD"
+mvn verify -P unit-tests -Dgpg.skip=true 2>&1 | grep -E "Tests run:|BUILD"
 ```
 
-Expected: `BUILD SUCCESS`. None of the 9 tagged classes should appear in test output. Only classes like `AccountGenerationTests`, `Bip39UtilsTests`, `MoveOptionTest`, `SigningTests`, `OrderlessPayloadTests`, `AndroidMultikeyValidationTest`, `AccountDerivedPathTests`, `KeylessMultiKeyTest` should run.
+Expected: `BUILD SUCCESS`. None of the tagged integration classes should appear. Unit classes that should run: `AccountGenerationTests`, `Bip39UtilsTests`, `MoveOptionTest`, `SigningTests`, `OrderlessPayloadTests`, `AndroidMultikeyValidationTest`, `AccountDerivedPathTests`, `KeylessMultiKeyTest`, `LoggingTest`, `LoggingCustomNetworkTest`, `PluginSettingsTest`.
 
 - [ ] **Step: Commit**
 
@@ -319,7 +319,7 @@ jobs:
           cache: 'maven'
 
       - name: Run unit tests
-        run: mvn test -P unit-tests
+        run: mvn verify -P unit-tests -Dgpg.skip=true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -327,11 +327,12 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: unit
-          fail_ci_if_error: true
+          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
 
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -342,8 +343,13 @@ jobs:
           cache: 'maven'
 
       - name: Install Aptos CLI
+        env:
+          APTOS_CLI_VERSION: "9.3.0"
         run: |
-          curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3
+          curl -fsSL "https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v${APTOS_CLI_VERSION}/aptos-cli-${APTOS_CLI_VERSION}-Ubuntu-22.04-x86_64.zip" \
+            -o /tmp/aptos-cli.zip
+          unzip /tmp/aptos-cli.zip -d ~/.local/bin
+          chmod +x ~/.local/bin/aptos
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Start localnet
@@ -351,13 +357,13 @@ jobs:
 
       - name: Wait for localnet
         run: |
-          echo "Waiting for localnet..."
-          for i in {1..30}; do
-            if curl -sf http://localhost:8080/v1 > /dev/null 2>&1; then
+          echo "Waiting for localnet readiness..."
+          for i in {1..45}; do
+            if curl -sf http://localhost:8070/ > /dev/null 2>&1; then
               echo "Localnet ready after ${i}x2s"
               exit 0
             fi
-            echo "  attempt $i/30..."
+            echo "  attempt $i/45..."
             sleep 2
           done
           echo "Localnet failed to start. Log:"
@@ -365,7 +371,7 @@ jobs:
           exit 1
 
       - name: Run integration tests
-        run: mvn test -P integration-tests
+        run: mvn verify -P integration-tests -Dgpg.skip=true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -373,7 +379,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: integration
-          fail_ci_if_error: true
+          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
 ```
 
 - [ ] **Step 2: Verify YAML is valid**

@@ -12,7 +12,12 @@ public class TestConfig {
     private static AptosConfig.Network resolveNetwork() {
         String prop = System.getProperty("APTOS_NETWORK");
         if (prop != null) {
-            return AptosConfig.Network.valueOf(prop);
+            try {
+                return AptosConfig.Network.valueOf(prop.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                    "Invalid APTOS_NETWORK value: '" + prop + "'. Must be one of: MAINNET, TESTNET, DEVNET, LOCALNET", e);
+            }
         }
         return AptosConfig.Network.TESTNET;
     }

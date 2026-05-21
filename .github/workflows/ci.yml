@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: unit
-          fail_ci_if_error: false
+          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
 
   integration-tests:
     name: Integration Tests
@@ -42,8 +42,13 @@ jobs:
           cache: 'maven'
 
       - name: Install Aptos CLI
+        env:
+          APTOS_CLI_VERSION: "9.3.0"
         run: |
-          curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3
+          curl -fsSL "https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v${APTOS_CLI_VERSION}/aptos-cli-${APTOS_CLI_VERSION}-Ubuntu-22.04-x86_64.zip" \
+            -o /tmp/aptos-cli.zip
+          unzip /tmp/aptos-cli.zip -d ~/.local/bin
+          chmod +x ~/.local/bin/aptos
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Start localnet
@@ -72,4 +77,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: integration
-          fail_ci_if_error: false
+          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}

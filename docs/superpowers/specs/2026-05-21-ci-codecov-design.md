@@ -21,15 +21,15 @@ Add a GitHub Actions CI pipeline with two parallel jobs: one for unit tests and 
 
 | Job | Steps |
 |---|---|
-| `unit-tests` | checkout → Java 17 → `mvn test -P unit-tests` → upload coverage (flag: `unit`) |
-| `integration-tests` | checkout → Java 17 → install aptos CLI → start localnet → wait for health → `mvn test -P integration-tests` → upload coverage (flag: `integration`) |
+| `unit-tests` | checkout → Java 17 → `mvn verify -P unit-tests -Dgpg.skip=true` → upload coverage (flag: `unit`) |
+| `integration-tests` | checkout → Java 17 → install aptos CLI → start localnet → wait for readiness → `mvn verify -P integration-tests -Dgpg.skip=true` → upload coverage (flag: `integration`) |
 
-Both jobs run on `ubuntu-latest` and execute in parallel.
+Both jobs run on `ubuntu-latest` and execute in parallel. `mvn verify` is used (not `mvn test`) because JaCoCo's `report` goal is bound to the `verify` phase. `-Dgpg.skip=true` skips GPG signing which is also bound to `verify`.
 
 **Localnet startup:**
-- Install the `aptos` CLI binary from the latest GitHub release via the official install script
-- Start `aptos node run-localnet --with-faucet` as a background process
-- Poll `http://localhost:8080/v1` until it returns HTTP 200 (with a timeout ~60s) before running tests
+- Download the Aptos CLI binary for a pinned version directly from GitHub releases (avoids `curl | python3` supply-chain risk)
+- Start `aptos node run-local-testnet --with-faucet` as a background process
+- Poll `http://localhost:8070/` (the localnet's built-in readiness endpoint, which signals when node + faucet are both ready) until HTTP 200, timeout 90s
 
 ## Test Separation
 
@@ -40,16 +40,12 @@ Use JUnit 5 `@Tag("integration")` on all network-dependent test classes.
 - `BasicFundingSigningTests`
 - `MultiKeyTests`
 - `MultiKeyAccountTests`
-- `LoggingTest`
-- `LoggingCustomNetworkTest`
 - `ModuleFunctionTests`
 - `TransactionTests`
-- `PluginSettingsTest`
-- `KeylessMultiKeyTest`
+- `GasStationTest` (also `@Disabled` — tagged for correctness if ever re-enabled)
+- `MoveOptionIntegrationTest` (also `@Disabled` — tagged for correctness if ever re-enabled)
 
-Classes that are already `@Disabled` (`GasStationTest`, `MoveOptionIntegrationTest`) are not tagged — they remain disabled regardless.
-
-`MoveOptionTest`, `AccountGenerationTests`, `Bip39UtilsTests`, `SigningTests`, `OrderlessPayloadTests`, `AndroidMultikeyValidationTest`, `AccountDerivedPathTests` are pure unit tests — no changes needed.
+Pure unit tests — no changes needed: `MoveOptionTest`, `AccountGenerationTests`, `Bip39UtilsTests`, `SigningTests`, `OrderlessPayloadTests`, `AndroidMultikeyValidationTest`, `AccountDerivedPathTests`, `KeylessMultiKeyTest`, `LoggingTest`, `LoggingCustomNetworkTest`, `PluginSettingsTest`.
 
 ## Maven Profiles
 
@@ -95,7 +91,7 @@ The `APTOS_NETWORK` system property is read by `TestConfig` (or tests directly) 
 
 **JaCoCo** added to `<pluginManagement>` (version 0.8.12) and activated in both profiles with:
 - `prepare-agent` goal (bound to `initialize` phase) — sets JVM args for instrumentation
-- `report` goal (bound to `test` phase) — generates `target/site/jacoco/jacoco.xml`
+- `report` goal (bound to `verify` phase) — generates `target/site/jacoco/jacoco.xml`
 
 **Codecov upload** in each job via `codecov/codecov-action@v5`:
 ```yaml
@@ -104,8 +100,10 @@ The `APTOS_NETWORK` system property is read by `TestConfig` (or tests directly) 
     token: ${{ secrets.CODECOV_TOKEN }}
     files: target/site/jacoco/jacoco.xml
     flags: unit          # or: integration
-    fail_ci_if_error: true
+    fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
 ```
+
+`fail_ci_if_error` is `true` for pushes to `main` and PRs from within the repo, `false` for fork PRs (which lack access to `CODECOV_TOKEN`).
 
 Codecov merges the two flagged reports into a unified coverage view.
 
