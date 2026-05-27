@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for Aptos localnet functionality
  * Localnet has a publicly accessible faucet that should work without authentication
  */
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DevnetTest {
@@ -32,8 +33,7 @@ public class DevnetTest {
 
     @BeforeAll
     void setUp() {
-        // Use localnet for testing
-        network = AptosConfig.Network.LOCALNET;
+        network = TestConfig.DEFAULT_NETWORK;
         AptosConfig config = AptosConfig.builder().network(network).build();
         client = new AptosClient(config);
         testAccount = Account.generate();

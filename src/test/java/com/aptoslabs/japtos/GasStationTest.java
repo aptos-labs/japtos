@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for Aptos Gas Station client functionality on testnet.
  * Verifies that transactions can be sponsored by a gas station fee payer.
  */
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled

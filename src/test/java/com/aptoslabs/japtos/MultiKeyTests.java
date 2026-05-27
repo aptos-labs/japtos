@@ -33,6 +33,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MultiKeyTests {
@@ -42,7 +43,7 @@ public class MultiKeyTests {
 
     @BeforeAll
     void setup() {
-        config = AptosConfig.builder().network(AptosConfig.Network.LOCALNET).build();
+        config = AptosConfig.builder().network(TestConfig.DEFAULT_NETWORK).build();
         client = new AptosClient(config);
         var kp = generateKeyPair();
         receiver = AccountAddress.fromPublicKey(kp.publicKey);

@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests for real transaction signing on Aptos localnet
  */
+@Tag("integration")
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TransactionTests {
@@ -38,7 +39,7 @@ public class TransactionTests {
 
     @BeforeAll
     void setUp() throws Exception {
-        network = AptosConfig.Network.LOCALNET;
+        network = TestConfig.DEFAULT_NETWORK;
         AptosConfig config = AptosConfig.builder().network(network).build();
         client = new AptosClient(config);
 

@@ -30,6 +30,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MultiKeyAccountTests {
@@ -39,7 +40,7 @@ public class MultiKeyAccountTests {
 
     @BeforeAll
     void setup() {
-        config = AptosConfig.builder().network(AptosConfig.Network.LOCALNET).build();
+        config = AptosConfig.builder().network(TestConfig.DEFAULT_NETWORK).build();
         client = new AptosClient(config);
 
         // Create a random receiver for all tests

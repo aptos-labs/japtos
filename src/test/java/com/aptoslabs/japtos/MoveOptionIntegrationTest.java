@@ -14,6 +14,7 @@ import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
 
 import java.math.BigInteger;
@@ -28,6 +29,7 @@ import com.aptoslabs.japtos.utils.Logger;
  * mvn test -Dtest=MoveOptionIntegrationTest
  * Test disabled due to Devnet resets and test will fail...
  */
+@Tag("integration")
 @Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MoveOptionIntegrationTest {
