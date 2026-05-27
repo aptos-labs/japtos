@@ -39,7 +39,7 @@ public class TransactionTests {
 
     @BeforeAll
     void setUp() throws Exception {
-        network = AptosConfig.Network.LOCALNET;
+        network = TestConfig.DEFAULT_NETWORK;
         AptosConfig config = AptosConfig.builder().network(network).build();
         client = new AptosClient(config);
 

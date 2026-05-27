@@ -33,8 +33,7 @@ public class DevnetTest {
 
     @BeforeAll
     void setUp() {
-        // Use localnet for testing
-        network = AptosConfig.Network.LOCALNET;
+        network = TestConfig.DEFAULT_NETWORK;
         AptosConfig config = AptosConfig.builder().network(network).build();
         client = new AptosClient(config);
         testAccount = Account.generate();

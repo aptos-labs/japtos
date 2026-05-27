@@ -113,8 +113,9 @@ Codecov merges the two flagged reports into a unified coverage view.
 |---|---|
 | `.github/workflows/ci.yml` | Create |
 | `pom.xml` | Add JaCoCo plugin + two Maven profiles |
-| 10 test class files | Add `@Tag("integration")` |
-| `src/test/java/com/aptoslabs/japtos/utils/TestConfig.java` | Read `APTOS_NETWORK` system property to override network |
+| 8 test class files | Add `@Tag("integration")` (see list above) |
+| `src/test/java/com/aptoslabs/japtos/utils/TestConfig.java` | Read `APTOS_NETWORK` system property to override network; expose as `TestConfig.DEFAULT_NETWORK` |
+| Integration test classes | Replace hardcoded `AptosConfig.Network.LOCALNET` with `TestConfig.DEFAULT_NETWORK` so the `APTOS_NETWORK` override actually flows through |
 
 ## Out of Scope
 

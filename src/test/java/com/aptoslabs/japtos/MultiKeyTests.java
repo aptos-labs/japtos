@@ -43,7 +43,7 @@ public class MultiKeyTests {
 
     @BeforeAll
     void setup() {
-        config = AptosConfig.builder().network(AptosConfig.Network.LOCALNET).build();
+        config = AptosConfig.builder().network(TestConfig.DEFAULT_NETWORK).build();
         client = new AptosClient(config);
         var kp = generateKeyPair();
         receiver = AccountAddress.fromPublicKey(kp.publicKey);

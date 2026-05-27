@@ -40,7 +40,7 @@ public class MultiKeyAccountTests {
 
     @BeforeAll
     void setup() {
-        config = AptosConfig.builder().network(AptosConfig.Network.LOCALNET).build();
+        config = AptosConfig.builder().network(TestConfig.DEFAULT_NETWORK).build();
         client = new AptosClient(config);
 
         // Create a random receiver for all tests

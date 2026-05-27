@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ModuleFunctionTests {
-    private final AptosConfig.Network network = AptosConfig.Network.LOCALNET;
+    private final AptosConfig.Network network = TestConfig.DEFAULT_NETWORK;
     private AptosClient client;
     private Ed25519Account sender;
     private Ed25519Account recipient;
@@ -35,8 +35,6 @@ public class ModuleFunctionTests {
 
     @BeforeAll
     void setup() throws IOException {
-        // Only setup LOCALNET for tests that need it
-        // The settlement test will use its own testnet configuration
         try {
             config = AptosConfig.builder().network(network).build();
             client = new AptosClient(config);
@@ -136,6 +134,7 @@ public class ModuleFunctionTests {
 
     @Test
     @Order(2)
+    @Disabled("Depends on public testnet + hardcoded private key/module address; CI only provisions localnet. Re-enable manually for ad-hoc testnet verification.")
     @DisplayName("Call settlement module settle_transaction function on testnet")
     void callSettlementFunction() throws Exception {
         Logger.info("=== Testing Settlement Module settle_transaction Function ===");
