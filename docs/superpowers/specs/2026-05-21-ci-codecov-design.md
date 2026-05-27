@@ -27,8 +27,8 @@ Add a GitHub Actions CI pipeline with two parallel jobs: one for unit tests and 
 Both jobs run on `ubuntu-latest` and execute in parallel. `mvn verify` is used (not `mvn test`) because JaCoCo's `report` goal is bound to the `verify` phase. `-Dgpg.skip=true` skips GPG signing which is also bound to `verify`.
 
 **Localnet startup:**
-- Download the Aptos CLI binary for a pinned version directly from GitHub releases (avoids `curl | python3` supply-chain risk)
-- Start `aptos node run-local-testnet --with-faucet` as a background process
+- Install the Aptos CLI via the `@aptos-labs/aptos-cli@3.0.0` npm wrapper: `npm install --no-save` the package, then `npx aptos --install` with `APTOS_CLI_VERSION` pinned. The wrapper reads `APTOS_CLI_VERSION` to bypass package managers and download the pinned release directly from GitHub Releases, auto-detects the Ubuntu version from `/etc/os-release`, extracts to a tmpdir, moves the binary to `~/.local/bin`, and verifies the SHA256 checksum. Subsequent CLI invocations go through `npx aptos …` so no PATH manipulation is required.
+- Start `npx aptos node run-localnet --force-restart --assume-yes` as a background process (faucet on port 8081 is included by default in v4+)
 - Poll `http://localhost:8070/` (the localnet's built-in readiness endpoint, which signals when node + faucet are both ready) until HTTP 200, timeout 90s
 
 ## Test Separation

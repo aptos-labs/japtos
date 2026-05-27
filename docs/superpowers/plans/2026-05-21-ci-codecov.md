@@ -342,18 +342,19 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Install Aptos CLI
         env:
-          APTOS_CLI_VERSION: "9.3.0"
+          APTOS_CLI_VERSION: '9.3.0'
         run: |
-          curl -fsSL "https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v${APTOS_CLI_VERSION}/aptos-cli-${APTOS_CLI_VERSION}-Ubuntu-24.04-x86_64.zip" \
-            -o /tmp/aptos-cli.zip
-          unzip /tmp/aptos-cli.zip -d ~/.local/bin
-          chmod +x ~/.local/bin/aptos
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          npm install --no-save @aptos-labs/aptos-cli@3.0.0
+          npx aptos --install
 
       - name: Start localnet
-        run: aptos node run-local-testnet --with-faucet > /tmp/localnet.log 2>&1 &
+        run: npx aptos node run-localnet --force-restart --assume-yes > /tmp/localnet.log 2>&1 &
 
       - name: Wait for localnet
         run: |
