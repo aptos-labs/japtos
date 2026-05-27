@@ -45,7 +45,7 @@ jobs:
         env:
           APTOS_CLI_VERSION: "9.3.0"
         run: |
-          curl -fsSL "https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v${APTOS_CLI_VERSION}/aptos-cli-${APTOS_CLI_VERSION}-Ubuntu-22.04-x86_64.zip" \
+          curl -fsSL "https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v${APTOS_CLI_VERSION}/aptos-cli-${APTOS_CLI_VERSION}-Ubuntu-24.04-x86_64.zip" \
             -o /tmp/aptos-cli.zip
           unzip /tmp/aptos-cli.zip -d ~/.local/bin
           chmod +x ~/.local/bin/aptos
