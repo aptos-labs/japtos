@@ -18,8 +18,8 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
+# Deny-all default; each job opts into only the scopes it needs.
+permissions: {}
 
 jobs:
   publish:
@@ -27,13 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: maven-central
+    # mvn deploy talks to Maven Central, not GitHub. Read-only token is enough for checkout.
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.release.target_commitish }}
-          fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -65,21 +69,37 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: mvn -B clean deploy -DskipTests
 
-      - name: Bump to next SNAPSHOT on main
+  bump-version:
+    name: Bump main to next SNAPSHOT
+    runs-on: ubuntu-latest
+    needs: publish
+    # Isolated from the deploy step so third-party Maven plugins never see a write-scoped token.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Bump pom.xml to next SNAPSHOT
         run: |
-          current="${{ steps.version.outputs.version }}"
+          current="${{ needs.publish.outputs.version }}"
           IFS='.' read -r major minor patch <<< "$current"
           next="${major}.${minor}.$((patch + 1))-SNAPSHOT"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout main
           mvn -B versions:set -DnewVersion="$next" -DgenerateBackupPoms=false
           if git diff --quiet pom.xml; then
             echo "pom.xml already at $next; nothing to commit"
             exit 0
           fi
           git add pom.xml
-          git commit -m "chore: bump version to ${next} after ${{ steps.version.outputs.version }} release"
+          git commit -m "chore: bump version to ${next} after ${current} release"
           git push origin main
