@@ -1,0 +1,85 @@
+# Publishes japtos to Maven Central via the Central Portal.
+#
+# Trigger: a GitHub Release is published. The tag (e.g. v1.3.0) drives the version.
+#
+# Required repository secrets:
+#   CENTRAL_USERNAME    - Central Portal user token username (central.sonatype.com -> Account -> Generate User Token)
+#   CENTRAL_PASSWORD    - Central Portal user token password
+#   GPG_PRIVATE_KEY     - ASCII-armored GPG private key: `gpg --armor --export-secret-keys FA3B5E4A`
+#                         Key fingerprint must match <keyname> in pom.xml (currently FA3B5E4A).
+#   GPG_PASSPHRASE      - Passphrase for the GPG key
+#
+# Optional: configure an Environment named `maven-central` in repo settings to add a
+# required-reviewer gate before any publish runs.
+
+name: Publish to Maven Central
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: maven-central
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          version="${tag#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$tag' is not a valid release version (expected vMAJOR.MINOR.PATCH)"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set release version in pom.xml
+        run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
+
+      - name: Publish to Maven Central
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B clean deploy -DskipTests
+
+      - name: Bump to next SNAPSHOT on main
+        run: |
+          current="${{ steps.version.outputs.version }}"
+          IFS='.' read -r major minor patch <<< "$current"
+          next="${major}.${minor}.$((patch + 1))-SNAPSHOT"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          mvn -B versions:set -DnewVersion="$next" -DgenerateBackupPoms=false
+          if git diff --quiet pom.xml; then
+            echo "pom.xml already at $next; nothing to commit"
+            exit 0
+          fi
+          git add pom.xml
+          git commit -m "chore: bump version to ${next} after ${{ steps.version.outputs.version }} release"
+          git push origin main
