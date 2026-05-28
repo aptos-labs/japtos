@@ -39,6 +39,10 @@
     <gson.version>2.10.1</gson.version>
     <bouncycastle.version>1.84</bouncycastle.version>
     <slf4j.version>2.0.9</slf4j.version>
+    <!-- GPG signing key. No default: pass the full 40-char fingerprint at release time
+         via -Dgpg.keyname=<fingerprint>. Short key IDs are collision-prone and are not
+         recommended for production signing configuration. -->
+    <gpg.keyname />
   </properties>
 
   <dependencyManagement>
@@ -60,14 +64,14 @@
       <artifactId>okhttp</artifactId>
       <version>${okhttp.version}</version>
     </dependency>
-    
+
     <!-- JSON Processing -->
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>${gson.version}</version>
     </dependency>
-    
+
     <!-- Cryptography - Android compatible -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
@@ -84,14 +88,14 @@
       <artifactId>bcutil-jdk18on</artifactId>
       <version>${bouncycastle.version}</version>
     </dependency>
-    
+
     <!-- Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-    
+
     <!-- Testing -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -114,42 +118,17 @@
   <build>
     <plugins>
 
+      <!-- Generates Constants.java from src/main/java-templates/ with ${project.version} interpolated.
+           Output goes to target/generated-sources/java-templates/ — the tracked template is never modified. -->
       <plugin>
-        <groupId>com.google.code.maven-replacer-plugin</groupId>
-        <artifactId>replacer</artifactId>
-        <version>1.5.3</version> <!-- Use a recent version -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>templating-maven-plugin</artifactId>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
+            <id>filter-src</id>
             <goals>
-              <goal>replace</goal>
+              <goal>filter-sources</goal>
             </goals>
-            <configuration>
-              <file>src/main/java/com/aptoslabs/japtos/core/Constants.java</file>
-              <replacements>
-                <replacement>
-                  <token>@@PROJECT_VERSION</token>
-                  <value>${project.version}</value>
-                </replacement>
-              </replacements>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-gpg-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>sign-artifacts</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>sign</goal>
-            </goals>
-            <configuration>
-               <keyname>FA3B5E4A</keyname>
-            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -157,7 +136,6 @@
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.9.0</version>
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>central</publishingServerId>
@@ -165,38 +143,40 @@
         </configuration>
       </plugin>
 
+      <!-- Sources jar attached at default `package` phase so it exists before GPG signs at `verify`. -->
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
         <executions>
           <execution>
             <id>attach-sources</id>
-            <phase>deploy</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-            <additionalOptions>-Xdoclint:none</additionalOptions>
+          <additionalOptions>-Xdoclint:none</additionalOptions>
         </configuration>
         <executions>
           <execution>
             <id>attach-javadocs</id>
-            <phase>deploy</phase>
-            <goals><goal>jar</goal></goals>
+            <goals>
+              <goal>jar</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
 
     </plugins>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+    <pluginManagement><!-- lock down plugin versions to avoid Maven defaults -->
       <plugins>
-        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.4.0</version>
         </plugin>
-        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.3.1</version>
@@ -204,10 +184,6 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.13.0</version>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -228,6 +204,28 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.6.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.4.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.12.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.8</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>templating-maven-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.9.0</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
@@ -297,6 +295,37 @@
                 <APTOS_NETWORK>LOCALNET</APTOS_NETWORK>
               </systemPropertyVariables>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- GPG signing only runs for releases. Activate with -DperformRelease=true (Maven convention,
+         also set automatically by maven-release-plugin). This keeps `mvn verify` fast for everyday
+         use and CI test runs — no more -Dgpg.skip=true workaround needed. -->
+    <profile>
+      <id>release</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+                <configuration>
+                  <keyname>${gpg.keyname}</keyname>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

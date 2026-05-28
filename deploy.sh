@@ -1,1 +1,0 @@
-mvn clean package javadoc:jar source:jar gpg:sign deploy -DskipTests
