@@ -3,11 +3,15 @@
 # Trigger: a GitHub Release is published. The tag (e.g. v1.3.0) drives the version.
 #
 # Required repository secrets:
-#   CENTRAL_USERNAME    - Central Portal user token username (central.sonatype.com -> Account -> Generate User Token)
-#   CENTRAL_PASSWORD    - Central Portal user token password
-#   GPG_PRIVATE_KEY     - ASCII-armored GPG private key: `gpg --armor --export-secret-keys FA3B5E4A`
-#                         Key fingerprint must match <keyname> in pom.xml (currently FA3B5E4A).
-#   GPG_PASSPHRASE      - Passphrase for the GPG key
+#   CENTRAL_USERNAME      - Central Portal user token username (central.sonatype.com -> Account -> Generate User Token)
+#   CENTRAL_PASSWORD      - Central Portal user token password
+#   GPG_PRIVATE_KEY       - ASCII-armored GPG private key:
+#                             `gpg --armor --export-secret-keys <FULL_FINGERPRINT>`
+#                           Find the fingerprint via `gpg --list-secret-keys --keyid-format=long --fingerprint`.
+#   GPG_PASSPHRASE        - Passphrase for the GPG key
+#   GPG_KEY_FINGERPRINT   - Full 40-char fingerprint of the signing key (no spaces). Passed to
+#                           maven-gpg-plugin as -Dgpg.keyname to disambiguate the signing key.
+#                           Short key IDs are collision-prone and not used here.
 #
 # Optional: configure an Environment named `maven-central` in repo settings to add a
 # required-reviewer gate before any publish runs.
@@ -33,9 +37,11 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
+      # Check out the release tag (immutable) rather than target_commitish (typically a branch
+      # name that can advance after the release is cut). Guarantees published bits == tagged commit.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.release.target_commitish }}
+          ref: refs/tags/${{ github.event.release.tag_name }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
@@ -52,11 +58,11 @@ jobs:
         id: version
         run: |
           tag="${{ github.event.release.tag_name }}"
-          version="${tag#v}"
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Tag '$tag' is not a valid release version (expected vMAJOR.MINOR.PATCH)"
             exit 1
           fi
+          version="${tag#v}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Set release version in pom.xml
@@ -67,9 +73,12 @@ jobs:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        # -DperformRelease=true activates the `release` profile in pom.xml,
-        # which enables GPG signing. Without this flag, no signing occurs.
-        run: mvn -B clean deploy -DskipTests -DperformRelease=true
+        # -DperformRelease=true activates the `release` profile in pom.xml (which enables GPG
+        # signing). -Dgpg.keyname uses the full fingerprint to unambiguously pick the signing key.
+        run: |
+          mvn -B clean deploy -DskipTests \
+            -DperformRelease=true \
+            -Dgpg.keyname="${{ secrets.GPG_KEY_FINGERPRINT }}"
 
   bump-version:
     name: Bump main to next SNAPSHOT
@@ -91,6 +100,7 @@ jobs:
 
       - name: Bump pom.xml to next SNAPSHOT
         run: |
+          set -euo pipefail
           current="${{ needs.publish.outputs.version }}"
           IFS='.' read -r major minor patch <<< "$current"
           next="${major}.${minor}.$((patch + 1))-SNAPSHOT"
@@ -104,4 +114,22 @@ jobs:
           fi
           git add pom.xml
           git commit -m "chore: bump version to ${next} after ${current} release"
-          git push origin main
+
+          # main can advance while the publish job runs. Rebase + retry on push contention;
+          # bail loudly if a rebase conflict appears (means someone else also touched pom.xml).
+          for attempt in 1 2 3 4 5; do
+            if git push origin main; then
+              echo "Pushed bump on attempt $attempt"
+              exit 0
+            fi
+            echo "Push rejected on attempt $attempt; fetching latest main and rebasing..."
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              echo "::error::Rebase onto origin/main produced a conflict; manual intervention required"
+              exit 1
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "::error::Failed to push bump after 5 attempts"
+          exit 1
