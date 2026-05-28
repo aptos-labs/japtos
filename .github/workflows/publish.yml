@@ -67,7 +67,9 @@ jobs:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: mvn -B clean deploy -DskipTests
+        # -DperformRelease=true activates the `release` profile in pom.xml,
+        # which enables GPG signing. Without this flag, no signing occurs.
+        run: mvn -B clean deploy -DskipTests -DperformRelease=true
 
   bump-version:
     name: Bump main to next SNAPSHOT

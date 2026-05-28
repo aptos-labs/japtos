@@ -24,8 +24,7 @@ jobs:
           cache: 'maven'
 
       - name: Run unit tests
-        run: mvn verify -P unit-tests -Dgpg.skip=true
-      - name: Upload coverage
+        run: mvn verify -P unit-tests      - name: Upload coverage
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -76,8 +75,7 @@ jobs:
           exit 1
 
       - name: Run integration tests
-        run: mvn verify -P integration-tests -Dgpg.skip=true
-      - name: Upload coverage
+        run: mvn verify -P integration-tests      - name: Upload coverage
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
