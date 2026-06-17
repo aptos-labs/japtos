@@ -23,9 +23,12 @@ import java.util.List;
  *   <li>Multi-signature verification</li>
  * </ul>
  *
- * <p>The authentication key for a MultiEd25519 public key is derived from the first
- * public key in the collection, maintaining compatibility with single-signature schemes
- * while enabling multi-signature functionality.</p>
+ * <p>The authentication key for a MultiEd25519 public key follows the Aptos scheme-1
+ * derivation: {@code SHA3-256(pubkey_1 || pubkey_2 || ... || pubkey_n || threshold || 0x01)},
+ * where each public key contributes its raw 32 bytes and {@code threshold} is a single byte.
+ * This matches the address derivation used by {@code MultiEd25519Account}, so
+ * {@link #accountAddress()} is consistent with multi-signature accounts created from the
+ * same keys and threshold.</p>
  *
  * <p>Example usage:</p>
  * <pre>{@code
