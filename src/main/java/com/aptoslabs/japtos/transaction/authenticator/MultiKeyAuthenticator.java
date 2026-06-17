@@ -127,10 +127,22 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
 
     @Override
     public byte[] getAuthenticationKey() {
-        // For MultiKey, return the first public key's bytes as authentication key
-        // This is a simplified implementation - in production you might want to 
-        // derive this differently
-        return publicKeys.get(0).toBytes();
+        // Derive the MultiKey (scheme 3) authentication key over the BCS encoding
+        // vector<AnyPublicKey> + u8 threshold, matching MultiKeyAccount.deriveAccountAddress()
+        // so the authentication key equals the signing account's address.
+        try {
+            Serializer serializer = new Serializer();
+            serializer.serializeU32AsUleb128(publicKeys.size());
+            for (PublicKey pk : publicKeys) {
+                new AnyPublicKey(pk).serialize(serializer);
+            }
+            serializer.serializeU8((byte) threshold);
+            return com.aptoslabs.japtos.core.AuthenticationKey
+                    .fromSchemeAndBytes((byte) 3, serializer.toByteArray()).toBytes();
+        } catch (IOException e) {
+            Logger.error("Failed to derive MultiKey authentication key", e);
+            throw new RuntimeException("Failed to derive MultiKey authentication key", e);
+        }
     }
 
     @Override

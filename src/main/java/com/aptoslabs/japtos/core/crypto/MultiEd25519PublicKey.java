@@ -96,8 +96,17 @@ public class MultiEd25519PublicKey implements PublicKey {
 
     @Override
     public AuthenticationKey authKey() {
-        // For MultiEd25519, the authentication key is derived from the first public key
-        return publicKeys.get(0).authKey();
+        // MultiEd25519 auth keys are derived under scheme 1 over the raw layout
+        // concat(pubkey_bytes..., threshold), matching MultiEd25519Account.deriveAccountAddress()
+        // and the Aptos on-chain derivation. This keeps accountAddress() consistent with accounts.
+        byte[] multiPk = new byte[publicKeys.size() * Ed25519PublicKey.LENGTH + 1];
+        int offset = 0;
+        for (Ed25519PublicKey publicKey : publicKeys) {
+            System.arraycopy(publicKey.toBytes(), 0, multiPk, offset, Ed25519PublicKey.LENGTH);
+            offset += Ed25519PublicKey.LENGTH;
+        }
+        multiPk[offset] = (byte) (threshold & 0xFF);
+        return AuthenticationKey.fromSchemeAndBytes((byte) 1, multiPk);
     }
 
     @Override

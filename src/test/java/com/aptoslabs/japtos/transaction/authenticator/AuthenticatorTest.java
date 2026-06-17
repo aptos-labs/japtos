@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.transaction.authenticator;
 
+import com.aptoslabs.japtos.account.MultiEd25519Account;
+import com.aptoslabs.japtos.account.MultiKeyAccount;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
@@ -55,16 +57,24 @@ class AuthenticatorTest {
     @Test
     @DisplayName("MultiEd25519Authenticator builds an MSB-first bitmap and serializes variant 1")
     void multiEd25519Authenticator() throws IOException {
-        Ed25519PublicKey k2 = Ed25519PrivateKey.generate().publicKey();
+        // Build the authenticator over the same keys/threshold as a real MultiEd25519 account so
+        // the derived authentication key can be checked against that account's address.
+        Ed25519PrivateKey p1 = Ed25519PrivateKey.generate();
+        Ed25519PrivateKey p2 = Ed25519PrivateKey.generate();
+        MultiEd25519Account account = MultiEd25519Account.fromPrivateKeys(List.of(p1, p2), 1);
+        List<Ed25519PublicKey> keys = account.getPublicKeys();
+
         MultiEd25519Authenticator auth =
-                new MultiEd25519Authenticator(List.of(pub, k2), sig, 1, List.of(0));
+                new MultiEd25519Authenticator(keys, sig, 1, List.of(0));
         assertEquals(2, auth.getPublicKeys().size());
         assertEquals(1, auth.getThreshold());
         assertEquals(List.of(0), auth.getSignerIndices());
         assertSame(sig, auth.getSignatureObject());
-        assertArrayEquals(pub.toBytes(), auth.getPublicKey());
-        assertArrayEquals(pub.toBytes(), auth.getAuthenticationKey());
+        assertArrayEquals(keys.get(0).toBytes(), auth.getPublicKey());
         assertArrayEquals(sig.toBytes(), auth.getSignature());
+
+        // The authentication key is the scheme-1 derivation and must equal the account's address.
+        assertArrayEquals(account.getAccountAddress().toBytes(), auth.getAuthenticationKey());
 
         byte[] bytes = auth.bcsToBytes();
         assertEquals(0x01, bytes[0]);
@@ -96,7 +106,12 @@ class AuthenticatorTest {
     @Test
     @DisplayName("MultiKeyAuthenticator serializes variant 3 and supports single/multi signatures")
     void multiKeyAuthenticator() throws IOException {
-        List<PublicKey> keys = List.of(pub, Ed25519PrivateKey.generate().publicKey());
+        // Mirror a real MultiKey account so the derived authentication key can be cross-checked
+        // against that account's scheme-3 address.
+        Ed25519PrivateKey p1 = Ed25519PrivateKey.generate();
+        Ed25519PrivateKey p2 = Ed25519PrivateKey.generate();
+        MultiKeyAccount account = MultiKeyAccount.fromPrivateKeys(List.of(p1, p2), 1);
+        List<PublicKey> keys = account.getPublicKeys();
 
         // Single-signature convenience constructor
         MultiKeyAuthenticator single = new MultiKeyAuthenticator(keys, sig, 1, List.of(0));
@@ -104,7 +119,8 @@ class AuthenticatorTest {
         assertEquals(keys, single.getPublicKeys());
         assertEquals(1, single.getThreshold());
         assertEquals(List.of(0), single.getSignerIndices());
-        assertArrayEquals(pub.toBytes(), single.getAuthenticationKey());
+        // The authentication key is the scheme-3 derivation and must equal the account's address.
+        assertArrayEquals(account.getAccountAddress().toBytes(), single.getAuthenticationKey());
         assertTrue(single.getPublicKey().length > 0);
         assertArrayEquals(sig.toBytes(), single.getSignature());
 

@@ -127,8 +127,10 @@ class CryptoExtraTest {
     @Test
     @DisplayName("MultiEd25519PublicKey serializes vector<key> + threshold and validates inputs")
     void multiEd25519PublicKey() throws IOException {
-        Ed25519PublicKey k1 = Ed25519PrivateKey.generate().publicKey();
-        Ed25519PublicKey k2 = Ed25519PrivateKey.generate().publicKey();
+        Ed25519PrivateKey priv1 = Ed25519PrivateKey.generate();
+        Ed25519PrivateKey priv2 = Ed25519PrivateKey.generate();
+        Ed25519PublicKey k1 = priv1.publicKey();
+        Ed25519PublicKey k2 = priv2.publicKey();
         MultiEd25519PublicKey multi = new MultiEd25519PublicKey(List.of(k1, k2), 2);
 
         assertEquals(2, multi.getThreshold());
@@ -138,8 +140,16 @@ class CryptoExtraTest {
         // 1 (count) + 2*(1 len + 32) + 1 (threshold) = 68
         assertEquals(68, multi.toBytes().length);
         assertEquals(multi.toBytes().length * 2, multi.toHexString().length());
-        // authKey derives from first key
-        assertEquals(k1.authKey(), multi.authKey());
+
+        // authKey() uses the scheme-1 derivation over concat(pubkey_bytes..., threshold), which
+        // must be consistent with how MultiEd25519Account derives its address from the same keys.
+        com.aptoslabs.japtos.account.MultiEd25519Account account =
+                com.aptoslabs.japtos.account.MultiEd25519Account.fromPrivateKeys(
+                        List.of(priv1, priv2), 2);
+        assertEquals(account.getAccountAddress(), multi.accountAddress());
+
+        // It must NOT collapse to the first key's auth key (the previous simplified behaviour).
+        assertNotEquals(k1.authKey(), multi.authKey());
 
         assertThrows(IllegalArgumentException.class, () -> new MultiEd25519PublicKey(List.of(), 1));
         assertThrows(IllegalArgumentException.class, () -> new MultiEd25519PublicKey(List.of(k1), 0));
