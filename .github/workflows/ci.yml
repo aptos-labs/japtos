@@ -31,7 +31,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: unit
-          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+          # Coverage gating is enforced by Codecov's own status checks, so the upload is
+          # best-effort: transient Codecov CLI/CDN issues (e.g. "Could not verify signature")
+          # must not fail a build whose tests already passed.
+          fail_ci_if_error: false
 
   integration-tests:
     name: Integration Tests
@@ -83,4 +86,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/site/jacoco/jacoco.xml
           flags: integration
-          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+          # Coverage gating is enforced by Codecov's own status checks, so the upload is
+          # best-effort: transient Codecov CLI/CDN issues (e.g. "Could not verify signature")
+          # must not fail a build whose tests already passed.
+          fail_ci_if_error: false
