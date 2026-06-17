@@ -58,32 +58,52 @@ class TransactionArgumentTest {
     }
 
     @Test
-    @DisplayName("U128 entry-function encoding is little-endian and 16 bytes")
+    @DisplayName("U128 encodes little-endian in both the tagged and entry-function forms")
     void u128() throws IOException {
         TransactionArgument.U128 arg = new TransactionArgument.U128(BigInteger.ONE);
         assertEquals(BigInteger.ONE, arg.getValue());
+
+        // Entry-function form: 16 little-endian bytes (low byte first).
         byte[] efn = arg.serializeForEntryFunction();
-        assertEquals(16, efn.length);
-        assertEquals(1, efn[0]); // little-endian: low byte first
-        // Tagged form: tag 2 then 16 big-endian-padded bytes
-        byte[] t = tagged(arg);
-        assertEquals(17, t.length);
-        assertEquals(2, t[0]);
+        byte[] expectedValue = new byte[16];
+        expectedValue[0] = 0x01;
+        assertArrayEquals(expectedValue, efn);
+
+        // Tagged form (used by script payloads): tag 2 then the same 16 little-endian bytes.
+        byte[] expectedTagged = new byte[17];
+        expectedTagged[0] = 0x02;
+        expectedTagged[1] = 0x01;
+        assertArrayEquals(expectedTagged, tagged(arg));
+
+        // A larger multi-byte value confirms ordering beyond the first byte.
+        TransactionArgument.U128 big = new TransactionArgument.U128(BigInteger.valueOf(0x0102L));
+        byte[] bigEfn = big.serializeForEntryFunction();
+        assertEquals(0x02, bigEfn[0]);
+        assertEquals(0x01, bigEfn[1]);
+
+        // Values exceeding 128 bits are rejected in both forms.
         assertThrows(IllegalArgumentException.class,
                 () -> new TransactionArgument.U128(BigInteger.ONE.shiftLeft(200)).serialize(new Serializer()));
+        assertThrows(IllegalArgumentException.class,
+                () -> new TransactionArgument.U128(BigInteger.ONE.shiftLeft(200)).serializeForEntryFunction());
     }
 
     @Test
-    @DisplayName("U256 entry-function encoding is little-endian and 32 bytes")
+    @DisplayName("U256 encodes little-endian in both the tagged and entry-function forms")
     void u256() throws IOException {
         TransactionArgument.U256 arg = new TransactionArgument.U256(BigInteger.valueOf(255));
         assertEquals(BigInteger.valueOf(255), arg.getValue());
+
         byte[] efn = arg.serializeForEntryFunction();
-        assertEquals(32, efn.length);
-        assertEquals((byte) 0xff, efn[0]);
-        byte[] t = tagged(arg);
-        assertEquals(33, t.length);
-        assertEquals(8, t[0]);
+        byte[] expectedValue = new byte[32];
+        expectedValue[0] = (byte) 0xff;
+        assertArrayEquals(expectedValue, efn);
+
+        byte[] expectedTagged = new byte[33];
+        expectedTagged[0] = 0x08;
+        expectedTagged[1] = (byte) 0xff;
+        assertArrayEquals(expectedTagged, tagged(arg));
+
         assertThrows(IllegalArgumentException.class,
                 () -> new TransactionArgument.U256(BigInteger.ONE.shiftLeft(300)).serialize(new Serializer()));
     }
@@ -152,11 +172,15 @@ class TransactionArgumentTest {
     @Test
     @DisplayName("Default serializeForEntryFunction falls back to bcsToBytes")
     void defaultEntryFunction() throws IOException {
-        // U64Vector overrides serializeForEntryFunction, but the inherited default on a plain
-        // argument equals bcsToBytes(). Validate via a Bool whose default would equal tagged form.
-        TransactionArgument.AccountAddress arg =
-                new TransactionArgument.AccountAddress(AccountAddress.zero());
-        // bcsToBytes equals the tagged serialization
-        assertArrayEquals(tagged(arg), arg.bcsToBytes());
+        // The built-in variants all override serializeForEntryFunction, so use a minimal
+        // argument that relies on the inherited default. That default must equal bcsToBytes().
+        TransactionArgument custom = new TransactionArgument() {
+            @Override
+            public void serialize(Serializer serializer) throws IOException {
+                serializer.serializeU8((byte) 0x42);
+            }
+        };
+        assertArrayEquals(new byte[]{0x42}, custom.serializeForEntryFunction());
+        assertArrayEquals(custom.bcsToBytes(), custom.serializeForEntryFunction());
     }
 }

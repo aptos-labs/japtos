@@ -5,7 +5,6 @@ import com.aptoslabs.japtos.bcs.Serializer;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,6 +22,32 @@ public abstract class TransactionArgument implements Serializable {
      */
     public byte[] serializeForEntryFunction() throws IOException {
         return bcsToBytes();
+    }
+
+    /**
+     * Converts a non-negative integer to a fixed-width little-endian byte array as required by BCS.
+     *
+     * <p>BCS encodes all integers little-endian, so both the tagged ({@link #serialize}) and the
+     * entry-function ({@link #serializeForEntryFunction}) forms of u128/u256 use this layout.</p>
+     *
+     * @param value the unsigned value to encode
+     * @param width the target width in bytes (16 for u128, 32 for u256)
+     * @return the little-endian encoding of {@code value}
+     * @throws IllegalArgumentException if {@code value} is negative or does not fit in {@code width} bytes
+     */
+    static byte[] toLittleEndianBytes(BigInteger value, int width) {
+        if (value.signum() < 0) {
+            throw new IllegalArgumentException("Unsigned integer cannot be negative");
+        }
+        if (value.bitLength() > width * 8) {
+            throw new IllegalArgumentException("Value too large for u" + (width * 8));
+        }
+        byte[] be = value.toByteArray(); // big-endian, may include a leading sign byte
+        byte[] le = new byte[width];
+        for (int i = 0; i < width && i < be.length; i++) {
+            le[i] = be[be.length - 1 - i];
+        }
+        return le;
     }
 
     /**
@@ -96,37 +121,14 @@ public abstract class TransactionArgument implements Serializable {
         @Override
         public void serialize(Serializer serializer) throws IOException {
             serializer.serializeU8((byte) 2); // U128 tag
-            // Convert BigInteger to byte array for U128 serialization
-            byte[] bytes = value.toByteArray();
-            if (bytes.length > 16) {
-                throw new IllegalArgumentException("U128 value too large");
-            }
-            // Pad to 16 bytes if necessary
-            byte[] padded = new byte[16];
-            System.arraycopy(bytes, 0, padded, 16 - bytes.length, bytes.length);
-            serializer.serializeU128(padded);
+            // BCS encodes integers little-endian, identical to serializeForEntryFunction().
+            serializer.serializeU128(toLittleEndianBytes(value, 16));
         }
         
         @Override
         public byte[] serializeForEntryFunction() throws IOException {
             Serializer serializer = new Serializer();
-            byte[] bytes = value.toByteArray();
-            byte[] padded = new byte[16];
-            if (bytes[0] < 0) {
-                // Handle negative sign extension for positive BigIntegers
-                Arrays.fill(padded, (byte) 0);
-            }
-            int srcPos = Math.max(0, bytes.length - 16);
-            int destPos = Math.max(0, 16 - bytes.length);
-            int length = Math.min(bytes.length, 16);
-            System.arraycopy(bytes, srcPos, padded, destPos, length);
-            
-            // Convert to little-endian
-            byte[] littleEndian = new byte[16];
-            for (int i = 0; i < 16; i++) {
-                littleEndian[i] = padded[15 - i];
-            }
-            serializer.serializeU128(littleEndian);
+            serializer.serializeU128(toLittleEndianBytes(value, 16));
             return serializer.toByteArray();
         }
 
@@ -329,37 +331,14 @@ public abstract class TransactionArgument implements Serializable {
         @Override
         public void serialize(Serializer serializer) throws IOException {
             serializer.serializeU8((byte) 8); // U256 tag
-            // Convert BigInteger to byte array for U256 serialization
-            byte[] bytes = value.toByteArray();
-            if (bytes.length > 32) {
-                throw new IllegalArgumentException("U256 value too large");
-            }
-            // Pad to 32 bytes if necessary
-            byte[] padded = new byte[32];
-            System.arraycopy(bytes, 0, padded, 32 - bytes.length, bytes.length);
-            serializer.serializeU256(padded);
+            // BCS encodes integers little-endian, identical to serializeForEntryFunction().
+            serializer.serializeU256(toLittleEndianBytes(value, 32));
         }
         
         @Override
         public byte[] serializeForEntryFunction() throws IOException {
             Serializer serializer = new Serializer();
-            byte[] bytes = value.toByteArray();
-            byte[] padded = new byte[32];
-            if (bytes[0] < 0) {
-                // Handle negative sign extension for positive BigIntegers
-                Arrays.fill(padded, (byte) 0);
-            }
-            int srcPos = Math.max(0, bytes.length - 32);
-            int destPos = Math.max(0, 32 - bytes.length);
-            int length = Math.min(bytes.length, 32);
-            System.arraycopy(bytes, srcPos, padded, destPos, length);
-            
-            // Convert to little-endian
-            byte[] littleEndian = new byte[32];
-            for (int i = 0; i < 32; i++) {
-                littleEndian[i] = padded[31 - i];
-            }
-            serializer.serializeU256(littleEndian);
+            serializer.serializeU256(toLittleEndianBytes(value, 32));
             return serializer.toByteArray();
         }
 
