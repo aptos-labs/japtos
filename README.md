@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/aptos-labs/japtos/branch/main/graph/badge.svg)](https://codecov.io/gh/aptos-labs/japtos)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.aptos-labs/japtos.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.aptos-labs/japtos)
 [![javadoc](https://javadoc.io/badge2/io.github.aptos-labs/japtos/javadoc.svg)](https://javadoc.io/doc/io.github.aptos-labs/japtos)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/badge/License-Innovation--Enabling%20Source%20Code-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://adoptium.net/)
 [![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84.svg)](#android-support)
 
@@ -689,7 +689,11 @@ setup, code style, and the pull request process. In short:
 
 ## License
 
-Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+Licensed under the Aptos Innovation-Enabling Source Code License. See [LICENSE](LICENSE) for
+the full terms. The license permits internal, non-production, and non-commercial use, with an
+additional grant for production use of applications built exclusively on the Aptos protocol;
+each released version automatically converts to the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+four years after it is published.
 
 ## References
 
