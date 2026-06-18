@@ -1,3 +1,6 @@
+// Copyright © Aptos Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 package com.aptoslabs.japtos.gasstation;
 
 import com.aptoslabs.japtos.account.Account;

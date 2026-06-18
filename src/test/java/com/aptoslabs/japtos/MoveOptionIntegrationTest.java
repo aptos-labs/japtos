@@ -1,3 +1,6 @@
+// Copyright © Aptos Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 package com.aptoslabs.japtos;
 
 import com.aptoslabs.japtos.account.Ed25519Account;

@@ -1,3 +1,6 @@
+// Copyright © Aptos Foundation
+// SPDX-License-Identifier: Apache-2.0
+
 package com.aptoslabs.japtos.client.dto;
 
 import com.google.gson.Gson;
