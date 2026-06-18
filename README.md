@@ -169,8 +169,9 @@ android {
 
 - The SDK uses OkHttp, which requires the `android.permission.INTERNET` permission in your
   `AndroidManifest.xml`.
-- All client calls are blocking. Never invoke `AptosClient` methods on the main/UI thread; use
-  a coroutine (`Dispatchers.IO`), an `ExecutorService`, or `AsyncTask`-style background work.
+- All client calls are blocking. Never invoke `AptosClient` methods on the main/UI thread; run
+  them on a background thread via a Kotlin coroutine (`Dispatchers.IO`), an `ExecutorService`,
+  or `WorkManager`.
 
 ### 5. R8 / ProGuard
 
@@ -307,10 +308,17 @@ Create a MultiEd25519 account from explicit public keys and signers:
 
 ```java
 import com.aptoslabs.japtos.account.Account;
+import com.aptoslabs.japtos.account.Ed25519Account;
+import com.aptoslabs.japtos.account.MultiEd25519Account;
 import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
 import java.util.Arrays;
 import java.util.List;
 
+Ed25519Account account1 = Ed25519Account.generate();
+Ed25519Account account2 = Ed25519Account.generate();
+Ed25519Account account3 = Ed25519Account.generate();
+
+// Only account1 actually signs; the threshold is 1-of-3.
 List<Account> signers = Arrays.asList(account1);
 List<Ed25519PublicKey> publicKeys = Arrays.asList(
         account1.getPublicKey(),
@@ -355,15 +363,19 @@ import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.types.*;
 import java.util.Arrays;
 
+// fromHex requires a fully padded 32-byte (64 hex character) address.
+AccountAddress aptosFramework = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000001");
+
 ModuleId moduleId = new ModuleId(
-        AccountAddress.fromHex("0x1"),
+        aptosFramework,
         new Identifier("coin"));
 
 TransactionPayload payload = new EntryFunctionPayload(
         moduleId,
         new Identifier("transfer"),
         Arrays.asList(new TypeTag.Struct(new StructTag(
-                AccountAddress.fromHex("0x1"),
+                aptosFramework,
                 new Identifier("aptos_coin"),
                 new Identifier("AptosCoin"),
                 Arrays.asList()))),
@@ -401,9 +413,10 @@ System.out.println("Success: " + tx.isSuccess());
 
 ```java
 import com.aptoslabs.japtos.core.crypto.Signature;
+import java.nio.charset.StandardCharsets;
 
 String message = "Hello, Aptos!";
-byte[] messageBytes = message.getBytes();
+byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
 
 Signature signature = account.sign(messageBytes);
 boolean isValid = account.verifySignature(messageBytes, signature);
@@ -531,6 +544,7 @@ import com.aptoslabs.japtos.transaction.FeePayerRawTransaction;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.utils.CryptoUtils;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 FeePayerRawTransaction feePayerTxn = new FeePayerRawTransaction(
@@ -539,7 +553,7 @@ FeePayerRawTransaction feePayerTxn = new FeePayerRawTransaction(
         feePayerAddress);
 
 byte[] feePayerBytes = feePayerTxn.bcsToBytes();
-byte[] domain = "APTOS::RawTransactionWithData".getBytes();
+byte[] domain = "APTOS::RawTransactionWithData".getBytes(StandardCharsets.UTF_8);
 byte[] prefixHash = CryptoUtils.sha3_256(domain);
 
 byte[] signingMessage = new byte[prefixHash.length + feePayerBytes.length];
@@ -563,12 +577,14 @@ AptosConfig.Network.DEVNET     // Development network (faucet funding available)
 AptosConfig.Network.LOCALNET   // Local network (faucet funding available)
 ```
 
-Automated faucet funding is only available on:
+The SDK's built-in faucet funding helper only supports:
 
 - **Devnet**: `https://fullnode.devnet.aptoslabs.com`
 - **Localnet**: `http://127.0.0.1:8080`
 
-On mainnet and testnet, accounts must be funded by other means (exchanges, faucets, transfers).
+For **testnet**, fund accounts through the official Aptos faucet at
+[aptos.dev/network/faucet](https://aptos.dev/network/faucet). On **mainnet**, accounts must be
+funded by other means (exchanges, transfers).
 
 You can also point the client at a custom fullnode:
 
