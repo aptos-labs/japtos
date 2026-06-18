@@ -5,6 +5,13 @@ All notable changes to the Japtos SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Adopted the Aptos Innovation-Enabling Source Code License (replacing Apache License 2.0).
+  Added a top-level `LICENSE` file, bundled it into the published jar, updated the `pom.xml`
+  license metadata, and added `Copyright © Aptos Foundation` / SPDX headers to all source files.
+
 ## [1.1.8] - 2024
 
 ### Changed
