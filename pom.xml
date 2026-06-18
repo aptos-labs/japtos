@@ -21,10 +21,13 @@
 
   <licenses>
     <license>
-      <name>Apache License, Version 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
-      <distribution>https://github.com/aptos-labs/japtos</distribution>
-      <comments>A permissive free software license issued by the Apache Software Foundation.</comments>
+      <name>Aptos Innovation-Enabling Source Code License</name>
+      <url>https://github.com/aptos-labs/japtos/blob/main/LICENSE</url>
+      <distribution>repo</distribution>
+      <comments>Source-available license granting internal, non-production, and non-commercial
+        use, with an additional grant for production use of applications built exclusively on
+        the Aptos protocol. Each released version automatically converts to the Apache License
+        2.0 four years after it is published.</comments>
     </license>
   </licenses>
 
@@ -123,6 +126,20 @@
   </dependencies>
 
   <build>
+    <!-- Keep the default resource root and additionally bundle the LICENSE into META-INF so the
+         published jar (and every copy of it) carries the license text, as the license requires. -->
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
 
       <!-- Generates Constants.java from src/main/java-templates/ with ${project.version} interpolated.
