@@ -256,7 +256,10 @@ import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 
 Ed25519PrivateKey privateKey = Ed25519PrivateKey.fromHex("your_private_key_hex");
-Ed25519Account account = new Ed25519Account(privateKey, null);
+Ed25519Account account = Ed25519Account.fromPrivateKey(privateKey);
+
+// Or directly from a hex-encoded private key:
+Ed25519Account sameAccount = Ed25519Account.fromPrivateKeyHex("your_private_key_hex");
 ```
 
 ### Hierarchical Deterministic Wallets
@@ -449,6 +452,7 @@ module example::optional_params {
 Calling it from Java:
 
 ```java
+import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.types.MoveOption;
 import com.aptoslabs.japtos.types.TransactionArgument;
 import com.aptoslabs.japtos.types.*;
@@ -462,6 +466,9 @@ List<TransactionArgument> args = Arrays.asList(
         new TransactionArgument.Bool(false),  // required bool
         MoveOption.u64(null));                // None
 
+// Address of the account that published the Move module (fully padded 32-byte hex).
+AccountAddress moduleAddress = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000abc");
 ModuleId moduleId = new ModuleId(moduleAddress, new Identifier("optional_params"));
 EntryFunctionPayload payload = new EntryFunctionPayload(
         moduleId,
@@ -509,6 +516,8 @@ Configure a gas station:
 ```java
 import com.aptoslabs.japtos.gasstation.*;
 import com.aptoslabs.japtos.api.AptosConfig;
+import com.aptoslabs.japtos.client.AptosClient;
+import com.aptoslabs.japtos.core.AccountAddress;
 
 // Option 1: GasStationSettings as an AptosConfig plugin.
 GasStationSettings settings = GasStationSettings.builder()
@@ -516,10 +525,12 @@ GasStationSettings settings = GasStationSettings.builder()
         .endpoint("https://gas-station.testnet.aptoslabs.com")
         .build();
 
-AptosConfig config = AptosConfig.builder()
+AptosConfig pluginConfig = AptosConfig.builder()
         .network(AptosConfig.Network.TESTNET)
         .plugin(settings)
         .build();
+
+AptosClient client = new AptosClient(pluginConfig);
 
 // Option 2: an explicit transaction submitter.
 GasStationClientOptions options = new GasStationClientOptions.Builder()
@@ -527,14 +538,17 @@ GasStationClientOptions options = new GasStationClientOptions.Builder()
         .apiKey("your_api_key_here")
         .build();
 
-AccountAddress feePayerAddress = AccountAddress.fromHex("0x...");
+AccountAddress feePayerAddress = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000abc");
 GasStationTransactionSubmitter gasStation =
         new GasStationTransactionSubmitter(options, feePayerAddress);
 
-AptosConfig config2 = AptosConfig.builder()
+AptosConfig submitterConfig = AptosConfig.builder()
         .network(AptosConfig.Network.TESTNET)
         .transactionSubmitter(gasStation)
         .build();
+
+AptosClient submitterClient = new AptosClient(submitterConfig);
 ```
 
 When using a gas station you must sign with the fee payer context:
@@ -542,11 +556,16 @@ When using a gas station you must sign with the fee payer context:
 ```java
 import com.aptoslabs.japtos.transaction.FeePayerRawTransaction;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
+import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
+import com.aptoslabs.japtos.transaction.authenticator.Ed25519Authenticator;
+import com.aptoslabs.japtos.client.dto.PendingTransaction;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.utils.CryptoUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+// rawTx, account, and feePayerAddress come from the transaction and gas-station
+// setup examples above; submitterClient is the gas-station-backed client.
 FeePayerRawTransaction feePayerTxn = new FeePayerRawTransaction(
         rawTx,
         List.of(),        // secondary signers
@@ -564,8 +583,9 @@ Signature signature = account.sign(signingMessage);
 AccountAuthenticator auth = new Ed25519Authenticator(account.getPublicKey(), signature);
 SignedTransaction signedTx = new SignedTransaction(rawTx, auth);
 
-// The fee payer covers gas; the signer's APT balance is unchanged.
-PendingTransaction pending = client.submitTransaction(signedTx);
+// Submit through the gas-station-backed client; the fee payer covers gas, so the
+// signer's APT balance is unchanged.
+PendingTransaction pending = submitterClient.submitTransaction(signedTx);
 ```
 
 ## Networks
