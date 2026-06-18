@@ -175,13 +175,6 @@ Releases are managed by maintainers. When a release is ready:
 By contributing to Japtos, you agree that your contributions will be licensed under the
 project's license, the Aptos Innovation-Enabling Source Code License (see [LICENSE](LICENSE)).
 
-New source files should include the standard header at the top of the file:
-
-```java
-// Copyright © Aptos Foundation
-// SPDX-License-Identifier: Apache-2.0
-```
-
 ## Questions?
 
 If you have questions about contributing, please:

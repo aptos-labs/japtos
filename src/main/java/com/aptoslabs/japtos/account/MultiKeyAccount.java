@@ -1,6 +1,3 @@
-// Copyright © Aptos Foundation
-// SPDX-License-Identifier: Apache-2.0
-
 package com.aptoslabs.japtos.account;
 
 import com.aptoslabs.japtos.bcs.Serializer;

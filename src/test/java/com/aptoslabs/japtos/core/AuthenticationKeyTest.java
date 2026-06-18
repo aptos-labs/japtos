@@ -1,6 +1,3 @@
-// Copyright © Aptos Foundation
-// SPDX-License-Identifier: Apache-2.0
-
 package com.aptoslabs.japtos.core;
 
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;

@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Adopted the Aptos Innovation-Enabling Source Code License (replacing Apache License 2.0).
-  Added a top-level `LICENSE` file, bundled it into the published jar, updated the `pom.xml`
-  license metadata, and added `Copyright © Aptos Foundation` / SPDX headers to all source files.
+  Added a top-level `LICENSE` file, bundled it into the published jar, and updated the
+  `pom.xml` license metadata.
 
 ## [1.1.8] - 2024
 
