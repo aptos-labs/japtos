@@ -1,453 +1,442 @@
 # Japtos - Aptos Java SDK
 
-A comprehensive Java SDK for interacting with the Aptos blockchain, featuring advanced cryptography, multi-signature support, and hierarchical deterministic wallet capabilities.
+[![CI](https://github.com/aptos-labs/japtos/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aptos-labs/japtos/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/aptos-labs/japtos/branch/main/graph/badge.svg)](https://codecov.io/gh/aptos-labs/japtos)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.aptos-labs/japtos.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.aptos-labs/japtos)
+[![javadoc](https://javadoc.io/badge2/io.github.aptos-labs/japtos/javadoc.svg)](https://javadoc.io/doc/io.github.aptos-labs/japtos)
+[![License](https://img.shields.io/badge/License-Innovation--Enabling%20Source%20Code-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://adoptium.net/)
+[![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84.svg)](#android-support)
 
-## 🚀 Features
+A pure-Java SDK for building on the [Aptos](https://aptos.dev/) blockchain. Japtos has no
+runtime dependency on the JVM-only parts of the platform, so the same artifact runs on the
+server (Java 17+) and on **Android** (API 26+). It provides account management, Ed25519 and
+multi-signature cryptography, BIP39/BIP44 hierarchical deterministic wallets, BCS
+serialization, a REST client, and gas-sponsored (fee payer) transactions.
 
-- **🔐 Advanced Cryptography**: Ed25519 and MultiEd25519 signature schemes
-- **🌱 Hierarchical Deterministic Wallets**: BIP39/BIP44 support with mnemonic phrases
-- **👥 Multi-Signature Accounts**: Threshold-based multi-signature transactions
-- **📦 BCS Serialization**: Binary Canonical Serialization for Aptos transactions
-- **🌐 HTTP Client**: Robust REST client for Aptos API interactions
-- **🧪 Comprehensive Testing**: Extensive test suite covering all functionality
+## Table of Contents
 
-## 📦 Maven Integration
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [Maven](#maven)
+  - [Gradle](#gradle)
+- [Android Support](#android-support)
+- [Quick Start](#quick-start)
+- [Logging](#logging)
+- [Usage Guide](#usage-guide)
+  - [Account Management](#account-management)
+  - [Hierarchical Deterministic Wallets](#hierarchical-deterministic-wallets)
+  - [Multi-Signature and Multi-Key Accounts](#multi-signature-and-multi-key-accounts)
+  - [Transactions](#transactions)
+  - [Message Signing](#message-signing)
+  - [Move `Option` Parameters](#move-option-parameters)
+  - [Gas Station (Sponsored Transactions)](#gas-station-sponsored-transactions)
+- [Networks](#networks)
+- [API Reference](#api-reference)
+- [Building from Source](#building-from-source)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [References](#references)
 
-### Repository Configuration
+## Requirements
 
-The Japtos SDK is published to Maven Central. No additional repository configuration is needed if you're using Maven Central (which is the default).
+| Target  | Minimum                                                         |
+| ------- | -------------------------------------------------------------- |
+| JVM     | Java 17 (the library is compiled to Java 17 bytecode)         |
+| Android | API level 26 (Android 8.0) or higher, with Android Gradle Plugin 8.0+ |
+| Build   | Maven 3.6+ or Gradle 8+                                       |
 
-If you need to explicitly configure the repository, add this to your `pom.xml`:
+> The published artifact is compiled with `maven.compiler.release=17`. On Android, AGP 8's
+> D8/R8 toolchain handles the Java 17 class files; see [Android Support](#android-support) for
+> the required `compileOptions` and packaging configuration.
 
-```xml
-<repositories>
-    <repository>
-        <id>central</id>
-        <name>Maven Central</name>
-        <url>https://repo1.maven.org/maven2</url>
-    </repository>
-</repositories>
-```
+## Installation
 
-### Dependency
+Japtos is published to [Maven Central](https://central.sonatype.com/artifact/io.github.aptos-labs/japtos)
+under the coordinates `io.github.aptos-labs:japtos`. Use the version shown in the Maven Central
+badge above as the latest release.
 
-Add the Japtos SDK dependency to your `pom.xml`:
+### Maven
 
 ```xml
 <dependency>
   <groupId>io.github.aptos-labs</groupId>
   <artifactId>japtos</artifactId>
-  <version>1.1.8</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
-## 🔧 Manual Installation
+Maven Central is enabled by default, so no extra `<repositories>` block is required.
 
-If you prefer to build from source, add the following dependencies to your `pom.xml`:
+### Gradle
 
-```xml
-<dependencies>
-    <!-- HTTP Client -->
-    <dependency>
-        <groupId>com.squareup.okhttp3</groupId>
-        <artifactId>okhttp</artifactId>
-        <version>4.12.0</version>
-    </dependency>
-    
-    <!-- JSON Processing -->
-    <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>2.10.1</version>
-    </dependency>
-    
-    <!-- Cryptography -->
-    <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk18on</artifactId>
-        <version>1.77</version>
-    </dependency>
-    <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk18on</artifactId>
-        <version>1.77</version>
-    </dependency>
-    <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcutil-jdk18on</artifactId>
-        <version>1.77</version>
-    </dependency>
-    
-    <!-- Logging -->
-    <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>2.0.9</version>
-    </dependency>
-</dependencies>
+Kotlin DSL (`build.gradle.kts`):
+
+```kotlin
+dependencies {
+    implementation("io.github.aptos-labs:japtos:1.2.0")
+}
 ```
 
-## 🏗️ Quick Start
+Groovy DSL (`build.gradle`):
 
-### Initialize Client
+```groovy
+dependencies {
+    implementation 'io.github.aptos-labs:japtos:1.2.0'
+}
+```
+
+Make sure `mavenCentral()` is listed in your `repositories {}` block (it is by default in
+projects created with recent Gradle/Android tooling).
+
+## Android Support
+
+Japtos is designed to run on Android (the Maven `description` is literally "Aptos Java SDK for
+Android"). Its dependencies — OkHttp, Gson, and the BouncyCastle `jdk18on` artifacts — are all
+Android compatible. A few project settings are required to integrate it cleanly.
+
+### 1. Minimum SDK and Java 17 desugaring
+
+Set `minSdk` to 26 or higher and enable Java 17 source/target compatibility. With AGP 8+ the
+D8/R8 toolchain compiles the library's Java 17 bytecode; enabling core library desugaring
+also back-ports `java.time`, `java.util.Optional`, and other APIs the SDK relies on to older
+Android runtimes.
+
+```kotlin
+android {
+    compileSdk = 34
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation("io.github.aptos-labs:japtos:1.2.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+}
+```
+
+### 2. BouncyCastle on Android
+
+Android ships its own stripped-down copy of BouncyCastle. To avoid clashes with the bundled
+provider, register the full `jdk18on` provider explicitly before performing cryptographic
+operations and let it take precedence:
+
+```java
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import java.security.Security;
+
+// Run once during app startup (e.g. in Application.onCreate()).
+Security.removeProvider("BC");
+Security.insertProviderAt(new BouncyCastleProvider(), 1);
+```
+
+### 3. Packaging conflicts
+
+The BouncyCastle artifacts include duplicate `META-INF` files that can break the APK/AAB
+packaging step. Exclude them:
+
+```kotlin
+android {
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+                "META-INF/INDEX.LIST",
+                "META-INF/*.SF",
+                "META-INF/*.DSA",
+                "META-INF/*.RSA"
+            )
+        }
+    }
+}
+```
+
+### 4. Networking and threading
+
+- The SDK uses OkHttp, which requires the `android.permission.INTERNET` permission in your
+  `AndroidManifest.xml`.
+- All client calls are blocking. Never invoke `AptosClient` methods on the main/UI thread; run
+  them on a background thread via a Kotlin coroutine (`Dispatchers.IO`), an `ExecutorService`,
+  or `WorkManager`.
+
+### 5. R8 / ProGuard
+
+If you enable code shrinking, keep BouncyCastle and the SDK's reflection-accessed classes:
+
+```proguard
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class com.aptoslabs.japtos.** { *; }
+```
+
+## Quick Start
 
 ```java
 import com.aptoslabs.japtos.client.AptosClient;
 import com.aptoslabs.japtos.api.AptosConfig;
 
-// Connect to different networks
+// Connect to a network: MAINNET, TESTNET, DEVNET, or LOCALNET.
 AptosConfig config = AptosConfig.builder()
-        .network(AptosConfig.Network.MAINNET)  // or TESTNET, DEVNET, LOCALNET
+        .network(AptosConfig.Network.DEVNET)
         .build();
-        AptosClient client = new AptosClient(config);
+
+AptosClient client = new AptosClient(config);
 ```
 
-### 📊 Logging Configuration
+## Logging
 
-The Japtos SDK includes a built-in logging system that provides detailed information about SDK operations. You can configure the logging level when initializing the client:
+Japtos includes a configurable logging facade. Set the level when building the config, or
+change it at runtime.
 
 ```java
 import com.aptoslabs.japtos.client.AptosClient;
 import com.aptoslabs.japtos.api.AptosConfig;
 import com.aptoslabs.japtos.utils.LogLevel;
 
-// Configure with specific log level
 AptosConfig config = AptosConfig.builder()
         .network(AptosConfig.Network.DEVNET)
-        .logLevel(LogLevel.INFO)  // Available: DEBUG, INFO, WARN, ERROR
+        .logLevel(LogLevel.INFO) // DEBUG, INFO, WARN, or ERROR
         .build();
 
 AptosClient client = new AptosClient(config);
-// Output: [2025-11-13 11:09:32.851] [INFO] Japtos SDK v1.1.6 initialized [DEVNET] - Support: https://github.com/aptos-labs/japtos
 ```
 
-**Log Levels:**
-- `LogLevel.DEBUG` - Detailed information for debugging (default)
-- `LogLevel.INFO` - General information messages
-- `LogLevel.WARN` - Warning messages
-- `LogLevel.ERROR` - Only error messages
+Available levels:
 
-**Example with different log levels:**
+| Level             | Description                                |
+| ----------------- | ------------------------------------------ |
+| `LogLevel.DEBUG`  | Detailed diagnostics (default)             |
+| `LogLevel.INFO`   | General informational messages             |
+| `LogLevel.WARN`   | Warnings only                              |
+| `LogLevel.ERROR`  | Errors only                                |
 
-```java
-// Production environment - only show warnings and errors
-AptosConfig prodConfig = AptosConfig.builder()
-        .network(AptosConfig.Network.MAINNET)
-        .logLevel(LogLevel.WARN)
-        .build();
-
-// Development environment - show all logs
-AptosConfig devConfig = AptosConfig.builder()
-        .network(AptosConfig.Network.DEVNET)
-        .logLevel(LogLevel.DEBUG)
-        .build();
-
-// Custom network with error-only logging
-AptosConfig customConfig = AptosConfig.builder()
-        .fullnode("https://custom.fullnode.example.com")
-        .logLevel(LogLevel.ERROR)
-        .build();
-```
-
-**Changing log level at runtime:**
+Change the level after initialization:
 
 ```java
 import com.aptoslabs.japtos.utils.Logger;
+import com.aptoslabs.japtos.utils.LogLevel;
 
-// Change log level after initialization
-Logger.setLogLevel(LogLevel.DEBUG);
-
-// Get current log level
-LogLevel currentLevel = Logger.getLogLevel();
+Logger.setLogLevel(LogLevel.WARN);
+LogLevel current = Logger.getLogLevel();
 ```
 
-## 📚 Usage Examples
+## Usage Guide
 
-### 🔑 Basic Account Management
+### Account Management
 
-**Generate a new account:**
+Generate a new Ed25519 account:
 
 ```java
 import com.aptoslabs.japtos.account.Ed25519Account;
 
-// Generate a new Ed25519 account
 Ed25519Account account = Ed25519Account.generate();
-System.out.
-
-        println("Address: "+account.getAccountAddress());
-        System.out.
-
-        println("Public Key: "+account.getPublicKey());
-        System.out.
-
-        println("Private Key: "+account.getPrivateKey());
+System.out.println("Address: " + account.getAccountAddress());
+System.out.println("Public Key: " + account.getPublicKey());
+System.out.println("Private Key: " + account.getPrivateKey());
 ```
 
-**Create account from private key:**
+Create an account from an existing private key:
 
 ```java
+import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 
-// Create account from existing private key
 Ed25519PrivateKey privateKey = Ed25519PrivateKey.fromHex("your_private_key_hex");
-Ed25519Account account = new Ed25519Account(privateKey, null);
+Ed25519Account account = Ed25519Account.fromPrivateKey(privateKey);
+
+// Or directly from a hex-encoded private key:
+Ed25519Account sameAccount = Ed25519Account.fromPrivateKeyHex("your_private_key_hex");
 ```
 
-### 🌱 Hierarchical Deterministic Wallets
+### Hierarchical Deterministic Wallets
 
-**Derive account from mnemonic phrase:**
+Derive an account from a BIP39 mnemonic using a BIP44 path (Aptos coin type is `637`):
 
 ```java
 import com.aptoslabs.japtos.account.Account;
+import com.aptoslabs.japtos.account.Ed25519Account;
 
-// Derive account using BIP44 path
 String mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-String derivationPath = "m/44'/637'/0'/0'/0'";  // Aptos coin type: 637
+String derivationPath = "m/44'/637'/0'/0'/0'";
 Ed25519Account account = Account.fromDerivationPath(derivationPath, mnemonic);
 ```
 
-**Convert entropy to mnemonic:**
+Convert entropy (such as a UUID) into a mnemonic phrase:
 
 ```java
 import com.aptoslabs.japtos.utils.Bip39Utils;
 
-// Convert UUID/entropy to mnemonic phrase
 String entropy = "9b4c9e83-a06e-4704-bc5f-b6a55d0dbb89";
 String mnemonic = Bip39Utils.entropyToMnemonic(entropy);
-// Result: "defense balance boat index fatal book remain champion cushion city escape huge"
+// "defense balance boat index fatal book remain champion cushion city escape huge"
 ```
 
-### 👥 Multi-Signature Accounts
+### Multi-Signature and Multi-Key Accounts
 
-**Create 1-of-2 multi-signature account:**
+Create a 1-of-2 MultiEd25519 account from private keys:
 
 ```java
+import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.account.MultiEd25519Account;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
+import java.util.Arrays;
+import java.util.List;
 
-// Create two accounts
 Ed25519Account account1 = Ed25519Account.generate();
 Ed25519Account account2 = Ed25519Account.generate();
 
-// Create multi-signature account (1-of-2 threshold)
 List<Ed25519PrivateKey> privateKeys = Arrays.asList(
-    account1.getPrivateKey(),
-    account2.getPrivateKey()
-);
+        account1.getPrivateKey(),
+        account2.getPrivateKey());
+
+// Threshold of 1 signature out of 2 keys.
 MultiEd25519Account multiAccount = MultiEd25519Account.fromPrivateKeys(privateKeys, 1);
 ```
 
-**Create multi-signature with specific public keys:**
+Create a MultiEd25519 account from explicit public keys and signers:
 
 ```java
-// Create multi-signature with specific public keys and signers
+import com.aptoslabs.japtos.account.Account;
+import com.aptoslabs.japtos.account.Ed25519Account;
+import com.aptoslabs.japtos.account.MultiEd25519Account;
+import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
+import java.util.Arrays;
+import java.util.List;
+
+Ed25519Account account1 = Ed25519Account.generate();
+Ed25519Account account2 = Ed25519Account.generate();
+Ed25519Account account3 = Ed25519Account.generate();
+
+// Only account1 actually signs; the threshold is 1-of-3.
 List<Account> signers = Arrays.asList(account1);
 List<Ed25519PublicKey> publicKeys = Arrays.asList(
-    account1.getPublicKey(),
-    account2.getPublicKey(),
-    account3.getPublicKey()
-);
+        account1.getPublicKey(),
+        account2.getPublicKey(),
+        account3.getPublicKey());
+
 MultiEd25519Account multiAccount = MultiEd25519Account.from(signers, publicKeys, 1);
 ```
 
-**MultiKey with mixed key types (Ed25519 + Keyless):**
+Build a MultiKey account mixing key types (for example Ed25519 + Keyless):
 
 ```java
+import com.aptoslabs.japtos.account.Ed25519Account;
 import com.aptoslabs.japtos.account.MultiKeyAccount;
+import com.aptoslabs.japtos.account.Account;
 import com.aptoslabs.japtos.core.crypto.KeylessPublicKey;
 import com.aptoslabs.japtos.core.crypto.PublicKey;
+import java.util.Arrays;
+import java.util.List;
 
-// Keyless public key from OAuth/passkey authentication
+// Keyless public key from OAuth/passkey authentication.
 String keylessHex = "1b68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d20...";
 KeylessPublicKey keylessKey = KeylessPublicKey.fromHexString(keylessHex);
 
-// Traditional Ed25519 account
-Ed25519Account passWallet = Ed25519Account.generate();
+Ed25519Account passkeyWallet = Ed25519Account.generate();
 
-// Create MultiKey with mixed types (threshold 1-of-2)
-List<PublicKey> publicKeys = Arrays.asList(keylessKey, passWallet.getPublicKey());
-List<Account> signers = Arrays.asList(passWallet);
+List<PublicKey> publicKeys = Arrays.asList(keylessKey, passkeyWallet.getPublicKey());
+List<Account> signers = Arrays.asList(passkeyWallet);
+
+// Threshold of 1 signature out of 2 keys.
 MultiKeyAccount multiKey = MultiKeyAccount.fromPublicKeysAndSigners(publicKeys, signers, 1);
-
 System.out.println("MultiKey address: " + multiKey.getAccountAddress());
 ```
 
-### 💰 Transaction Management
+### Transactions
 
-**Simple APT transfer:**
+Build, sign, and submit a simple APT transfer:
 
 ```java
 import com.aptoslabs.japtos.transaction.RawTransaction;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.types.*;
+import java.util.Arrays;
 
-// Build transfer payload
+// fromHex requires a fully padded 32-byte (64 hex character) address.
+AccountAddress aptosFramework = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000001");
+
 ModuleId moduleId = new ModuleId(
-    AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-    new Identifier("coin")
-);
+        aptosFramework,
+        new Identifier("coin"));
+
 TransactionPayload payload = new EntryFunctionPayload(
-    moduleId,
-    new Identifier("transfer"),
-    Arrays.asList(new TypeTag.Struct(new StructTag(
-        AccountAddress.fromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-        new Identifier("aptos_coin"),
-        new Identifier("AptosCoin"),
-        Arrays.asList()
-    ))),
-    Arrays.asList(
-        new TransactionArgument.AccountAddress(recipientAddress),
-        new TransactionArgument.U64(1000000L)  // 1 APT
-    )
-);
+        moduleId,
+        new Identifier("transfer"),
+        Arrays.asList(new TypeTag.Struct(new StructTag(
+                aptosFramework,
+                new Identifier("aptos_coin"),
+                new Identifier("AptosCoin"),
+                Arrays.asList()))),
+        Arrays.asList(
+                new TransactionArgument.AccountAddress(recipientAddress),
+                new TransactionArgument.U64(1_000_000L))); // 0.01 APT (octas)
 
-// Build and sign transaction
 RawTransaction rawTx = new RawTransaction(
-    account.getAccountAddress(),
-    sequenceNumber,
-    payload,
-    1000000L,  // maxGasAmount
-    100L,      // gasUnitPrice
-    System.currentTimeMillis() / 1000 + 3600,  // expiration
-    chainId
-);
+        account.getAccountAddress(),
+        sequenceNumber,
+        payload,
+        1_000_000L,                                   // maxGasAmount
+        100L,                                         // gasUnitPrice
+        System.currentTimeMillis() / 1000 + 3600,     // expiration (epoch seconds)
+        chainId);
 
-SignedTransaction signedTx = new SignedTransaction(rawTx, account.signTransactionWithAuthenticator(rawTx));
+SignedTransaction signedTx = new SignedTransaction(
+        rawTx, account.signTransactionWithAuthenticator(rawTx));
 ```
 
-**Submit and wait for transaction:**
+Submit and wait for the transaction to commit:
 
 ```java
-// Submit transaction
+import com.aptoslabs.japtos.client.dto.PendingTransaction;
+import com.aptoslabs.japtos.client.dto.Transaction;
+
 PendingTransaction pendingTx = client.submitTransaction(signedTx);
 System.out.println("Transaction Hash: " + pendingTx.getHash());
 
-// Wait for transaction to be committed
 Transaction tx = client.waitForTransaction(pendingTx.getHash());
 System.out.println("Success: " + tx.isSuccess());
 ```
 
-### 🔐 Message Signing
-
-**Sign and verify messages:**
+### Message Signing
 
 ```java
-// Sign a message
-String message = "Hello, Aptos!";
-byte[] messageBytes = message.getBytes();
-Signature signature = account.sign(messageBytes);
+import com.aptoslabs.japtos.core.crypto.Signature;
+import java.nio.charset.StandardCharsets;
 
-// Verify signature
+String message = "Hello, Aptos!";
+byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+
+Signature signature = account.sign(messageBytes);
 boolean isValid = account.verifySignature(messageBytes, signature);
 System.out.println("Signature Valid: " + isValid);
 ```
 
-## 🧪 Testing Scenarios
+### Move `Option` Parameters
 
-The SDK includes comprehensive tests demonstrating all functionality:
+`MoveOption` builds Aptos `std::option::Option` arguments. A `null` value produces `None`.
 
-### Basic Account Tests
-- Account generation and key management
-- Private/public key operations
-- Address derivation
-
-### Multi-Signature Tests
-- 1-of-2 and 1-of-3 multi-signature setups
-- Complex multi-signature configurations
-- Transaction signing with multiple signers
-
-### Hierarchical Deterministic Wallet Tests
-- BIP39 mnemonic generation from entropy
-- BIP44 path derivation
-- UUID to mnemonic conversion
-
-### Transaction Tests
-- APT transfers with single and multi-signature accounts
-- Balance checking and validation
-- Transaction serialization and submission
-
-### Integration Tests
-- End-to-end workflows from account creation to transaction execution
-- Funding and balance management
-- Real blockchain interactions
-
-## ⚠️ Important Notes
-
-### Network Support
-
-**Funding is only available for:**
-- **Devnet**: `https://fullnode.devnet.aptoslabs.com`
-- **Localnet**: `http://127.0.0.1:8080`
-
-For mainnet and testnet, you'll need to fund accounts through other means (exchanges, faucets, etc.).
-
-### Network Configuration
-
-```java
-// Available networks
-AptosConfig.Network.MAINNET    // Production network
-AptosConfig.Network.TESTNET    // Test network
-AptosConfig.Network.DEVNET     // Development network (funding available)
-AptosConfig.Network.LOCALNET   // Local network (funding available)
-```
-
-## 🏃‍♂️ Running Tests
-
-```bash
-# Run all tests
-mvn test
-
-# Run specific test class
-mvn test -Dtest=MultiKeyTests
-
-# Run specific test method
-mvn test -Dtest=MultiKeyTests#testMultikeyPathDerivation
-```
-
-## 📖 API Reference
-
-### Account Classes
-
-- `Ed25519Account`: Single-key Ed25519 account
-- `MultiEd25519Account`: Multi-signature account
-- `Account`: Abstract base class
-
-### Utility Classes
-
-- `Bip39Utils`: BIP39 mnemonic operations
-- `Bip44Utils`: BIP44 derivation utilities
-- `HexUtils`: Hexadecimal encoding/decoding
-
-### Transaction Classes
-
-- `RawTransaction`: Unsigned transaction
-- `SignedTransaction`: Signed transaction
-- `TransactionPayload`: Transaction payload types
-
-### Client Classes
-
-- `AptosClient`: Main client for API interactions
-- `HttpClient`: HTTP client interface
-
-### 🔧 Working with Move Option Types
-
-**Example Move module with optional parameters:**
+Example Move module:
 
 ```move
 module example::optional_params {
     use std::option::{Self, Option};
     use std::string::String;
-    
-    public entry fun test_options(
-        account: &signer,
-        u64_opt: Option<u64>,
-        string_opt: Option<String>,
-        bool_opt: Option<bool>,
-        address_opt: Option<address>
-    ) {
-        // Function accepts optional parameters
-    }
-    
+
     public entry fun test_mixed(
         account: &signer,
         required_u64: u64,
@@ -455,198 +444,294 @@ module example::optional_params {
         required_bool: bool,
         optional_u64: Option<u64>
     ) {
-        // Mix of required and optional parameters
+        // Mix of required and optional parameters.
     }
 }
 ```
 
-**Calling Move functions with optional parameters from Java:**
+Calling it from Java:
 
 ```java
+import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.types.MoveOption;
 import com.aptoslabs.japtos.types.TransactionArgument;
+import com.aptoslabs.japtos.types.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-// Example 1: All optional parameters with Some values
 List<TransactionArgument> args = Arrays.asList(
-    MoveOption.u64(12345L),                    // Some(12345)
-    MoveOption.string("hello from japtos"),     // Some("hello from japtos")
-    MoveOption.bool(true),                      // Some(true)
-    MoveOption.address(accountAddress)          // Some(0x123...)
-);
+        new TransactionArgument.U64(456L),    // required u64
+        MoveOption.string("optional value"),  // Some("optional value")
+        new TransactionArgument.Bool(false),  // required bool
+        MoveOption.u64(null));                // None
 
-// Example 2: Mix of Some and None values
-List<TransactionArgument> args = Arrays.asList(
-    MoveOption.u64(null),                       // None
-    MoveOption.string("optional value"),        // Some("optional value")
-    MoveOption.bool(null),                      // None
-    MoveOption.address(null)                    // None
-);
-
-// Example 3: Mixed required and optional parameters
-AccountAddress recipient = AccountAddress.fromHex("0x1");
-List<TransactionArgument> args = Arrays.asList(
-    new TransactionArgument.U64(456L),          // required u64
-    MoveOption.string("optional value"),        // optional string: Some("optional value")
-    new TransactionArgument.Bool(false),        // required bool
-    MoveOption.u64(null)                        // optional u64: None
-);
-
-// Build and submit transaction
+// Address of the account that published the Move module (fully padded 32-byte hex).
+AccountAddress moduleAddress = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000abc");
 ModuleId moduleId = new ModuleId(moduleAddress, new Identifier("optional_params"));
 EntryFunctionPayload payload = new EntryFunctionPayload(
-    moduleId,
-    new Identifier("test_mixed"),
-    Collections.emptyList(),
-    args
-);
+        moduleId,
+        new Identifier("test_mixed"),
+        Collections.emptyList(),
+        args);
+```
 
-// MoveOption factory methods for all types
-MoveOption.u8((byte) 1);                       // Some(1)
-MoveOption.u16((short) 100);                   // Some(100)
-MoveOption.u32(1000);                          // Some(1000)
-MoveOption.u64(10000L);                        // Some(10000)
-MoveOption.u128(BigInteger.valueOf(12345));    // Some(12345)
-MoveOption.u256(new BigInteger("999999"));     // Some(999999)
-MoveOption.bool(true);                         // Some(true)
-MoveOption.string("hello");                    // Some("hello")
-MoveOption.address(accountAddr);               // Some(address)
-MoveOption.u8Vector(new byte[]{1, 2, 3});     // Some([1,2,3])
+Factory methods are available for every supported type:
 
-// Working with MoveOption values
+```java
+import java.math.BigInteger;
+
+MoveOption.u8((byte) 1);
+MoveOption.u16((short) 100);
+MoveOption.u32(1000);
+MoveOption.u64(10_000L);
+MoveOption.u128(BigInteger.valueOf(12345));
+MoveOption.u256(new BigInteger("999999"));
+MoveOption.bool(true);
+MoveOption.string("hello");
+MoveOption.address(accountAddress);
+MoveOption.u8Vector(new byte[]{1, 2, 3});
+```
+
+Inspecting a `MoveOption`:
+
+```java
 MoveOption<TransactionArgument.U64> amount = MoveOption.u64(1000L);
 if (amount.isSome()) {
     TransactionArgument.U64 value = amount.unwrap();
     System.out.println("Amount: " + value.getValue());
 }
 
-// Convert to Java Optional
-Optional<TransactionArgument.U64> javaOpt = amount.toOptional();
+java.util.Optional<TransactionArgument.U64> javaOpt = amount.toOptional();
 ```
 
-### ⛽ Gas Station (Sponsored Transactions)
+### Gas Station (Sponsored Transactions)
 
-The SDK supports gas-sponsored transactions where a third party pays for transaction fees. This is useful for onboarding users without requiring them to hold APT for gas.
+The SDK supports gas-sponsored transactions, where a third party (the fee payer) pays the
+transaction fees. This is useful for onboarding users who do not yet hold APT.
 
-**Setup:**
+Configure a gas station:
 
 ```java
 import com.aptoslabs.japtos.gasstation.*;
+import com.aptoslabs.japtos.api.AptosConfig;
+import com.aptoslabs.japtos.client.AptosClient;
+import com.aptoslabs.japtos.core.AccountAddress;
 
-// Option 1: Using GasStationSettings with AptosConfig
+// Option 1: GasStationSettings as an AptosConfig plugin.
 GasStationSettings settings = GasStationSettings.builder()
-    .apiKey("your_api_key_here")
-    .endpoint("https://gas-station.testnet.aptoslabs.com")
-    .build();
+        .apiKey("your_api_key_here")
+        .endpoint("https://gas-station.testnet.aptoslabs.com")
+        .build();
 
-AptosConfig config = AptosConfig.builder()
-    .network(AptosConfig.Network.TESTNET)
-    .plugin(settings)
-    .build();
+AptosConfig pluginConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.TESTNET)
+        .plugin(settings)
+        .build();
 
-// Option 2: Direct client creation
+AptosClient client = new AptosClient(pluginConfig);
+
+// Option 2: an explicit transaction submitter.
 GasStationClientOptions options = new GasStationClientOptions.Builder()
-    .network(AptosConfig.Network.TESTNET)
-    .apiKey("your_api_key_here")
-    .build();
+        .network(AptosConfig.Network.TESTNET)
+        .apiKey("your_api_key_here")
+        .build();
 
-AccountAddress feePayerAddress = AccountAddress.fromHex("0x...");
-GasStationTransactionSubmitter gasStation = new GasStationTransactionSubmitter(options, feePayerAddress);
+AccountAddress feePayerAddress = AccountAddress.fromHex(
+        "0x0000000000000000000000000000000000000000000000000000000000000abc");
+GasStationTransactionSubmitter gasStation =
+        new GasStationTransactionSubmitter(options, feePayerAddress);
 
-AptosConfig config = AptosConfig.builder()
-    .network(AptosConfig.Network.TESTNET)
-    .transactionSubmitter(gasStation)
-    .build();
+AptosConfig submitterConfig = AptosConfig.builder()
+        .network(AptosConfig.Network.TESTNET)
+        .transactionSubmitter(gasStation)
+        .build();
 
-AptosClient client = new AptosClient(config);
+AptosClient submitterClient = new AptosClient(submitterConfig);
 ```
 
-**Signing for fee payer transactions:**
-
-When using gas station, you must sign with the fee payer context:
+When using a gas station you must sign with the fee payer context:
 
 ```java
-// Build your transaction
-RawTransaction rawTx = new RawTransaction(...);
+import com.aptoslabs.japtos.transaction.FeePayerRawTransaction;
+import com.aptoslabs.japtos.transaction.SignedTransaction;
+import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
+import com.aptoslabs.japtos.transaction.authenticator.Ed25519Authenticator;
+import com.aptoslabs.japtos.client.dto.PendingTransaction;
+import com.aptoslabs.japtos.core.crypto.Signature;
+import com.aptoslabs.japtos.utils.CryptoUtils;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-// Create FeePayerRawTransaction for signing
+// rawTx, account, and feePayerAddress come from the transaction and gas-station
+// setup examples above; submitterClient is the gas-station-backed client.
 FeePayerRawTransaction feePayerTxn = new FeePayerRawTransaction(
-    rawTx,
-    List.of(), // secondary signers
-    feePayerAddress
-);
+        rawTx,
+        List.of(),        // secondary signers
+        feePayerAddress);
 
-// Sign with fee payer salt
 byte[] feePayerBytes = feePayerTxn.bcsToBytes();
-byte[] domain = "APTOS::RawTransactionWithData".getBytes();
+byte[] domain = "APTOS::RawTransactionWithData".getBytes(StandardCharsets.UTF_8);
 byte[] prefixHash = CryptoUtils.sha3_256(domain);
+
 byte[] signingMessage = new byte[prefixHash.length + feePayerBytes.length];
 System.arraycopy(prefixHash, 0, signingMessage, 0, prefixHash.length);
 System.arraycopy(feePayerBytes, 0, signingMessage, prefixHash.length, feePayerBytes.length);
 
-// Sign and create transaction
 Signature signature = account.sign(signingMessage);
 AccountAuthenticator auth = new Ed25519Authenticator(account.getPublicKey(), signature);
 SignedTransaction signedTx = new SignedTransaction(rawTx, auth);
 
-// Submit - gas will be paid by the sponsor
-PendingTransaction pending = client.submitTransaction(signedTx);
+// Submit through the gas-station-backed client; the fee payer covers gas, so the
+// signer's APT balance is unchanged.
+PendingTransaction pending = submitterClient.submitTransaction(signedTx);
 ```
 
-The transaction will be submitted with the fee payer covering gas costs. Your account's APT balance remains unchanged.
+## Networks
 
-## 🔧 Troubleshooting
+```java
+AptosConfig.Network.MAINNET    // Production network
+AptosConfig.Network.TESTNET    // Test network
+AptosConfig.Network.DEVNET     // Development network (faucet funding available)
+AptosConfig.Network.LOCALNET   // Local network (faucet funding available)
+```
 
-### Common Issues
+The SDK's built-in faucet funding helper only supports:
+
+- **Devnet**: `https://fullnode.devnet.aptoslabs.com`
+- **Localnet**: `http://127.0.0.1:8080`
+
+For **testnet**, fund accounts through the official Aptos faucet at
+[aptos.dev/network/faucet](https://aptos.dev/network/faucet). On **mainnet**, accounts must be
+funded by other means (exchanges, transfers).
+
+You can also point the client at a custom fullnode:
+
+```java
+AptosConfig config = AptosConfig.builder()
+        .fullnode("https://custom.fullnode.example.com")
+        .build();
+```
+
+## API Reference
+
+Full Javadoc is published at
+[javadoc.io/doc/io.github.aptos-labs/japtos](https://javadoc.io/doc/io.github.aptos-labs/japtos).
+
+Key types:
+
+| Category    | Classes                                                                 |
+| ----------- | ----------------------------------------------------------------------- |
+| Accounts    | `Account`, `Ed25519Account`, `MultiEd25519Account`, `MultiKeyAccount`   |
+| Crypto      | `Ed25519PrivateKey`, `Ed25519PublicKey`, `KeylessPublicKey`, `Signature`|
+| Transactions| `RawTransaction`, `SignedTransaction`, `TransactionPayload`, `EntryFunctionPayload`, `FeePayerRawTransaction` |
+| Types       | `AccountAddress`, `ModuleId`, `Identifier`, `TypeTag`, `StructTag`, `TransactionArgument`, `MoveOption` |
+| Client      | `AptosClient`, `AptosConfig`                                            |
+| Utilities   | `Bip39Utils`, `Bip44Utils`, `HexUtils`, `CryptoUtils`, `Logger`         |
+| Gas Station | `GasStationSettings`, `GasStationClientOptions`, `GasStationTransactionSubmitter` |
+
+## Building from Source
+
+```bash
+git clone https://github.com/aptos-labs/japtos.git
+cd japtos
+
+mvn compile   # compile
+mvn package   # build the JAR
+```
+
+## Testing
+
+Unit tests (the default, fast suite) run without a network:
+
+```bash
+mvn verify -P unit-tests
+```
+
+Integration tests require a running Aptos localnet and are tagged `integration`:
+
+```bash
+mvn verify -P integration-tests
+```
+
+Run a single test class or method:
+
+```bash
+mvn test -Dtest=MultiKeyTests
+mvn test -Dtest=MultiKeyTests#testMultikeyPathDerivation
+```
+
+Both profiles produce a JaCoCo coverage report at `target/site/jacoco/jacoco.xml`, which CI
+uploads to [Codecov](https://codecov.io/gh/aptos-labs/japtos).
+
+## Troubleshooting
 
 **Transaction submission fails with "sequence number too old"**
-- Ensure you're using the latest sequence number from the blockchain
-- Check that no other transactions are pending for the same account
-- Use `client.getNextSequenceNumber(address)` to get the current sequence number
+
+- Use the latest sequence number from the blockchain via `client.getNextSequenceNumber(address)`.
+- Ensure no other transactions are pending for the same account.
 
 **"Account not found" errors**
-- New accounts need to be funded before they can send transactions
-- Use the faucet on devnet/testnet to fund accounts
-- Check that the account address is correctly formatted (32 bytes, hex string)
+
+- New accounts must be funded before they can send transactions.
+- Use the faucet on devnet/localnet to fund accounts.
+- Verify the address is correctly formatted (a 32-byte hex string).
 
 **BCS serialization errors**
-- Ensure all transaction arguments match the expected Move types
-- Check that optional parameters use `MoveOption` wrapper classes
-- Verify that addresses are properly formatted AccountAddress objects
+
+- Ensure transaction arguments match the expected Move types.
+- Wrap optional parameters with `MoveOption`.
+- Verify addresses are proper `AccountAddress` objects.
 
 **Gas station transaction failures**
-- Verify your API key is valid and has sufficient balance
-- Check that the fee payer address matches your gas station configuration
-- Ensure you're signing with the correct domain prefix for fee payer transactions
+
+- Confirm the API key is valid and funded.
+- Confirm the fee payer address matches the gas station configuration.
+- Sign with the `APTOS::RawTransactionWithData` domain prefix for fee payer transactions.
 
 **Network connection issues**
-- Verify the fullnode URL is correct and accessible
-- Check network connectivity and firewall settings
-- For custom networks, ensure the endpoint supports the Aptos REST API
 
-**Android compatibility issues**
-- The SDK uses BouncyCastle which is Android-compatible
-- Ensure you're using the correct JDK version (Java 8+)
-- Check that ProGuard rules preserve necessary classes if using code obfuscation
+- Verify the fullnode URL is correct and reachable.
+- Check connectivity and firewall settings.
+- For custom networks, confirm the endpoint exposes the Aptos REST API.
+
+**Android-specific issues**
+
+- See [Android Support](#android-support) for desugaring, BouncyCastle provider, packaging,
+  and R8/ProGuard configuration.
+- `NoSuchAlgorithmException` / provider errors usually mean the bundled Android BouncyCastle is
+  shadowing the SDK's. Re-register the provider as shown above.
+- `Duplicate files copied in APK META-INF/...` means you need the `packaging { resources { excludes } }` block.
+- `NetworkOnMainThreadException` means a client call ran on the UI thread; move it to a
+  background dispatcher.
 
 ### Getting Help
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/aptos-labs/japtos/issues)
-- **Documentation**: Check the [Aptos Documentation](https://aptos.dev/)
-- **Community**: Join the [Aptos Discord](https://discord.gg/aptoslabs)
+- **Documentation**: [Aptos Documentation](https://aptos.dev/)
+- **Community**: [Aptos Discord](https://discord.gg/aptoslabs)
 
-## 🤝 Contributing
+## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add comprehensive tests
-5. Submit a pull request
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development
+setup, code style, and the pull request process. In short:
 
-## 📄 License
+1. Fork the repository and create a feature branch from `main`.
+2. Make your changes, following the existing code style.
+3. Add tests and ensure `mvn verify -P unit-tests` passes.
+4. Update documentation (README, Javadoc, CHANGELOG) as needed.
+5. Open a pull request with a clear description.
 
-This project is licensed under the Apache License 2.0.
+## License
 
-## 🔗 References
+Licensed under the Aptos Innovation-Enabling Source Code License. See [LICENSE](LICENSE) for
+the full terms. The license permits internal, non-production, and non-commercial use, with an
+additional grant for production use of applications built exclusively on the Aptos protocol;
+each released version automatically converts to the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+four years after it is published.
+
+## References
 
 - [Aptos Documentation](https://aptos.dev/)
 - [Aptos REST API](https://fullnode.mainnet.aptoslabs.com/v1/spec#/)

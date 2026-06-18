@@ -1,0 +1,48 @@
+# Codecov configuration.
+#
+# Coverage is produced by two parallel CI jobs that upload as separate flags:
+#   - unit         (.github/workflows/ci.yml -> unit-tests job, ~30s)
+#   - integration  (.github/workflows/ci.yml -> integration-tests job, ~3-4m)
+#
+# Because the jobs finish at very different times, the project status must wait
+# for BOTH uploads before it is evaluated. Otherwise Codecov computes the status
+# from whichever report arrived first (almost always unit-only), which makes the
+# head appear to "lose" all integration-only coverage versus the merged base and
+# reports a spurious coverage drop.
+codecov:
+  require_ci_to_pass: true
+  notify:
+    # Two uploads are expected per commit (unit + integration). Hold status
+    # notifications until both have been received and merged.
+    after_n_builds: 2
+    wait_for_ci: true
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        # Tolerate minor run-to-run fluctuations rather than failing the PR.
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+
+# Carry forward each flag's coverage so a delayed or missing upload reuses the
+# previous report for that flag instead of being treated as zero coverage.
+flag_management:
+  default_rules:
+    carryforward: true
+  individual_flags:
+    - name: unit
+      carryforward: true
+    - name: integration
+      carryforward: true
+
+comment:
+  # Match the status gating: only post/update the PR comment once both uploads
+  # for the commit have been processed.
+  after_n_builds: 2
+  layout: "reach, diff, flags, files"
+  require_changes: false

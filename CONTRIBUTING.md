@@ -170,6 +170,11 @@ Releases are managed by maintainers. When a release is ready:
 3. Create a git tag for the version
 4. Publish to Maven Central
 
+## License
+
+By contributing to Japtos, you agree that your contributions will be licensed under the
+project's license, the Aptos Innovation-Enabling Source Code License (see [LICENSE](LICENSE)).
+
 ## Questions?
 
 If you have questions about contributing, please:
@@ -178,5 +183,5 @@ If you have questions about contributing, please:
 - Check existing issues and discussions
 - Review the README.md for usage examples
 
-Thank you for contributing to Japtos! 🚀
+Thank you for contributing to Japtos!
 
