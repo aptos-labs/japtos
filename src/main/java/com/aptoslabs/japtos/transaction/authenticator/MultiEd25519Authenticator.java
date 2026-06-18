@@ -133,9 +133,19 @@ public class MultiEd25519Authenticator implements AccountAuthenticator {
 
     @Override
     public byte[] getAuthenticationKey() {
-        // For MultiEd25519, the authentication key is derived from the public keys
-        // This is a simplified implementation
-        return publicKeys.get(0).toBytes();
+        // Derive the MultiEd25519 (scheme 1) authentication key over the raw layout
+        // concat(pubkey_bytes..., threshold), matching MultiEd25519Account.deriveAccountAddress()
+        // so the authentication key equals the signing account's address.
+        byte[] multiPk = new byte[publicKeys.size() * 32 + 1];
+        int offset = 0;
+        for (Ed25519PublicKey publicKey : publicKeys) {
+            byte[] pk = publicKey.toBytes();
+            System.arraycopy(pk, 0, multiPk, offset, 32);
+            offset += 32;
+        }
+        multiPk[offset] = (byte) (threshold & 0xFF);
+        return com.aptoslabs.japtos.core.AuthenticationKey
+                .fromSchemeAndBytes((byte) 1, multiPk).toBytes();
     }
 
     @Override

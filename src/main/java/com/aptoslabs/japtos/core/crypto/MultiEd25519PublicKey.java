@@ -23,9 +23,12 @@ import java.util.List;
  *   <li>Multi-signature verification</li>
  * </ul>
  *
- * <p>The authentication key for a MultiEd25519 public key is derived from the first
- * public key in the collection, maintaining compatibility with single-signature schemes
- * while enabling multi-signature functionality.</p>
+ * <p>The authentication key for a MultiEd25519 public key follows the Aptos scheme-1
+ * derivation: {@code SHA3-256(pubkey_1 || pubkey_2 || ... || pubkey_n || threshold || 0x01)},
+ * where each public key contributes its raw 32 bytes and {@code threshold} is a single byte.
+ * This matches the address derivation used by {@code MultiEd25519Account}, so
+ * {@link #accountAddress()} is consistent with multi-signature accounts created from the
+ * same keys and threshold.</p>
  *
  * <p>Example usage:</p>
  * <pre>{@code
@@ -96,8 +99,17 @@ public class MultiEd25519PublicKey implements PublicKey {
 
     @Override
     public AuthenticationKey authKey() {
-        // For MultiEd25519, the authentication key is derived from the first public key
-        return publicKeys.get(0).authKey();
+        // MultiEd25519 auth keys are derived under scheme 1 over the raw layout
+        // concat(pubkey_bytes..., threshold), matching MultiEd25519Account.deriveAccountAddress()
+        // and the Aptos on-chain derivation. This keeps accountAddress() consistent with accounts.
+        byte[] multiPk = new byte[publicKeys.size() * Ed25519PublicKey.LENGTH + 1];
+        int offset = 0;
+        for (Ed25519PublicKey publicKey : publicKeys) {
+            System.arraycopy(publicKey.toBytes(), 0, multiPk, offset, Ed25519PublicKey.LENGTH);
+            offset += Ed25519PublicKey.LENGTH;
+        }
+        multiPk[offset] = (byte) (threshold & 0xFF);
+        return AuthenticationKey.fromSchemeAndBytes((byte) 1, multiPk);
     }
 
     @Override
