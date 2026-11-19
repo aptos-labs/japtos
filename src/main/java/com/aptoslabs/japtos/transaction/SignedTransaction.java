@@ -86,7 +86,10 @@ public class SignedTransaction implements Serializable {
             );
         } else if (authenticator instanceof MultiKeyAuthenticator multiKeyAuth) {
             // Wrap the AccountAuthenticator(MultiKey) inside TransactionAuthenticator.SingleSender(4)
-            this.authenticator = new com.aptoslabs.japtos.transaction.authenticator.TransactionAuthenticatorSingleSender(multiKeyAuth);
+            this.authenticator = new TransactionAuthenticatorSingleSender(multiKeyAuth);
+        } else if (authenticator instanceof SingleKeyAuthenticator singleKeyAuth) {
+            // Wrap the AccountAuthenticator(SingleKey) inside TransactionAuthenticator.SingleSender(4)
+            this.authenticator = new TransactionAuthenticatorSingleSender(singleKeyAuth);
         } else {
             throw new IllegalArgumentException("Unsupported authenticator type: " + authenticator.getClass().getName());
         }

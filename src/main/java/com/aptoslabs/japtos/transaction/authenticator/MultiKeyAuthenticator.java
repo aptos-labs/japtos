@@ -2,7 +2,7 @@ package com.aptoslabs.japtos.transaction.authenticator;
 
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.crypto.AnyPublicKey;
-import com.aptoslabs.japtos.core.crypto.Ed25519PublicKey;
+import com.aptoslabs.japtos.core.crypto.AnySignature;
 import com.aptoslabs.japtos.core.crypto.PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
 import com.aptoslabs.japtos.utils.Logger;
@@ -75,10 +75,7 @@ public class MultiKeyAuthenticator implements AccountAuthenticator {
         // Serialize MultiKeySignature: vector<AnySignature> + bitmap
         serializer.serializeU32AsUleb128(signatures.size());
         for (Signature sig : signatures) {
-            // AnySignature variant for Ed25519 is 0 (ULEB128)
-            serializer.serializeU32AsUleb128(0);
-            // Ed25519Signature.serialize => serializeBytes(bytes)
-            serializer.serializeBytes(sig.toBytes());
+            new AnySignature(sig).serialize(serializer);
         }
 
         byte[] bitmap = createBitmap(signerIndices);

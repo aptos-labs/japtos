@@ -39,6 +39,11 @@ public class Bip44Utils {
     public static final String ED25519_SEED = "ed25519 seed";
 
     /**
+     * The SLH-DSA-SHA2-128s seed phrase for SLIP-0010 HD derivation (matches TypeScript SDK).
+     */
+    public static final String SLH_DSA_SHA2_128S_SEED = "SLH-DSA-SHA2-128s seed";
+
+    /**
      * Hardened derivation offset (2^31).
      */
     public static final int HARDENED_OFFSET = 0x80000000;
@@ -66,6 +71,55 @@ public class Bip44Utils {
      */
     public static boolean isValidHardenedPath(String path) {
         return APTOS_HARDENED_PATH_PATTERN.matcher(path).matches();
+    }
+
+    private static final Pattern GENERIC_HARDENED_PATH_PATTERN =
+            Pattern.compile("^m(/[0-9]+')*$");
+
+    /**
+     * Validates whether {@code path} is a fully-hardened path such as {@code m} or {@code m/0'/1'/2'}.
+     *
+     * @param path the derivation path to validate
+     * @return true if the path is valid, false otherwise
+     */
+    public static boolean isValidGenericHardenedPath(String path) {
+        return path != null && GENERIC_HARDENED_PATH_PATTERN.matcher(path).matches();
+    }
+
+    /**
+     * Derives the 48-byte SLH-DSA-SHA2-128s three-seeds value
+     * (SK seed || PRF seed || PK seed) from a mnemonic, following the TypeScript SDK:
+     * SLIP-0010 with curve seed {@value #SLH_DSA_SHA2_128S_SEED}, hardened derivation only,
+     * then {@code derivedKey(32) || chainCode[0..16]}.
+     *
+     * @param path     a fully-hardened derivation path (e.g., {@code m/44'/637'/0'/0'/0'})
+     * @param mnemonic the BIP39 mnemonic seed phrase
+     * @return the 48-byte three-seeds key material
+     */
+    public static byte[] deriveSlhDsaSha2128sThreeSeeds(String path, String mnemonic) {
+        return deriveSlhDsaSha2128sThreeSeedsFromSeed(path, mnemonicToSeed(mnemonic));
+    }
+
+    /**
+     * Seed-based variant of {@link #deriveSlhDsaSha2128sThreeSeeds(String, String)}.
+     *
+     * @param path a fully-hardened derivation path
+     * @param seed the raw master seed bytes
+     * @return the 48-byte three-seeds key material
+     */
+    public static byte[] deriveSlhDsaSha2128sThreeSeedsFromSeed(String path, byte[] seed) {
+        if (!isValidGenericHardenedPath(path)) {
+            throw new IllegalArgumentException("Invalid derivation path " + path);
+        }
+        DerivedKeys current = deriveKey(
+                SLH_DSA_SHA2_128S_SEED.getBytes(StandardCharsets.UTF_8), seed);
+        for (int segment : parsePath(path)) {
+            current = ckdPriv(current, segment + HARDENED_OFFSET);
+        }
+        byte[] threeSeeds = new byte[48];
+        System.arraycopy(current.key, 0, threeSeeds, 0, 32);
+        System.arraycopy(current.chainCode, 0, threeSeeds, 32, 16);
+        return threeSeeds;
     }
 
     /**
