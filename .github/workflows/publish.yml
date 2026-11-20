@@ -31,9 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: maven-central
-    # mvn deploy talks to Maven Central, not GitHub. Read-only token is enough for checkout.
+    # Read-only contents for checkout; id-token + attestations for SLSA build provenance.
     permissions:
       contents: read
+      id-token: write
+      attestations: write
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -79,6 +81,15 @@ jobs:
           mvn -B clean deploy -DskipTests \
             -DperformRelease=true \
             -Dgpg.keyname="${{ secrets.GPG_KEY_FINGERPRINT }}"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}-sources.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}-javadoc.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}.pom
 
   bump-version:
     name: Bump main to next SNAPSHOT
