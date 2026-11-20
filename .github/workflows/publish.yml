@@ -2,7 +2,7 @@
 #
 # Trigger: a GitHub Release is published. The tag (e.g. v1.3.0) drives the version.
 #
-# Required repository secrets:
+# Required `maven-central` Environment secrets:
 #   CENTRAL_USERNAME      - Central Portal user token username (central.sonatype.com -> Account -> Generate User Token)
 #   CENTRAL_PASSWORD      - Central Portal user token password
 #   GPG_PRIVATE_KEY       - ASCII-armored GPG private key:
@@ -13,8 +13,10 @@
 #                           maven-gpg-plugin as -Dgpg.keyname to disambiguate the signing key.
 #                           Short key IDs are collision-prone and not used here.
 #
-# Optional: configure an Environment named `maven-central` in repo settings to add a
-# required-reviewer gate before any publish runs.
+# pom.xml sets `<autoPublish>false</autoPublish>`, so after the `maven-central`
+# GitHub Environment gate approves upload, the validated bundle stays staged in
+# Central Portal (https://central.sonatype.com/publishing/deployments) until an
+# admin clicks Publish.
 
 name: Publish to Maven Central
 
@@ -25,25 +27,73 @@ on:
 # Deny-all default; each job opts into only the scopes it needs.
 permissions: {}
 
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
+  verify:
+    name: Verify tag, ancestry, and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/tags/${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate tag format and main ancestry
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$TAG' is not a valid release version (expected vMAJOR.MINOR.PATCH)"
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::Release tag '$TAG' ($(git rev-parse HEAD)) is not an ancestor of origin/main."
+            exit 1
+          fi
+
+          version="${TAG#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run unit tests
+        run: mvn -B verify -P unit-tests
+
   publish:
-    name: Publish to Maven Central
+    name: Stage bundle on Maven Central
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: verify
     environment: maven-central
     # Read-only contents for checkout; id-token + attestations for SLSA build provenance.
     permissions:
       contents: read
       id-token: write
       attestations: write
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     steps:
       # Check out the release tag (immutable) rather than target_commitish (typically a branch
       # name that can advance after the release is cut). Guarantees published bits == tagged commit.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: refs/tags/${{ github.event.release.tag_name }}
+          persist-credentials: false
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
@@ -56,45 +106,37 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          tag="${{ github.event.release.tag_name }}"
-          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Tag '$tag' is not a valid release version (expected vMAJOR.MINOR.PATCH)"
-            exit 1
-          fi
-          version="${tag#v}"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
       - name: Set release version in pom.xml
-        run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
+        env:
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: mvn -B versions:set -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false
 
-      - name: Publish to Maven Central
+      - name: Upload signed bundle to Central Portal
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
         # -DperformRelease=true activates the `release` profile in pom.xml (which enables GPG
         # signing). -Dgpg.keyname uses the full fingerprint to unambiguously pick the signing key.
         run: |
           mvn -B clean deploy -DskipTests \
             -DperformRelease=true \
-            -Dgpg.keyname="${{ secrets.GPG_KEY_FINGERPRINT }}"
+            -Dgpg.keyname="${GPG_KEY_FINGERPRINT}"
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}.jar
-            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}-sources.jar
-            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}-javadoc.jar
-            target/central-staging/io/github/aptos-labs/japtos/${{ steps.version.outputs.version }}/japtos-${{ steps.version.outputs.version }}.pom
+            target/central-staging/io/github/aptos-labs/japtos/${{ needs.verify.outputs.version }}/japtos-${{ needs.verify.outputs.version }}.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ needs.verify.outputs.version }}/japtos-${{ needs.verify.outputs.version }}-sources.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ needs.verify.outputs.version }}/japtos-${{ needs.verify.outputs.version }}-javadoc.jar
+            target/central-staging/io/github/aptos-labs/japtos/${{ needs.verify.outputs.version }}/japtos-${{ needs.verify.outputs.version }}.pom
 
   bump-version:
     name: Bump main to next SNAPSHOT
     runs-on: ubuntu-latest
-    needs: publish
+    needs: [verify, publish]
     # Isolated from the deploy step so third-party Maven plugins never see a write-scoped token.
     permissions:
       contents: write
@@ -110,10 +152,11 @@ jobs:
           cache: 'maven'
 
       - name: Bump pom.xml to next SNAPSHOT
+        env:
+          CURRENT_VERSION: ${{ needs.verify.outputs.version }}
         run: |
           set -euo pipefail
-          current="${{ needs.publish.outputs.version }}"
-          IFS='.' read -r major minor patch <<< "$current"
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
           next="${major}.${minor}.$((patch + 1))-SNAPSHOT"
 
           git config user.name "github-actions[bot]"
@@ -124,7 +167,7 @@ jobs:
             exit 0
           fi
           git add pom.xml
-          git commit -m "chore: bump version to ${next} after ${current} release"
+          git commit -m "chore: bump version to ${next} after ${CURRENT_VERSION} release"
 
           # main can advance while the publish job runs. Rebase + retry on push contention;
           # bail loudly if a rebase conflict appears (means someone else also touched pom.xml).
