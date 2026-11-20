@@ -53,8 +53,12 @@ public class Signature {
     private final byte[] signature;
 
     protected Signature(byte[] signature) {
-        if (signature.length != LENGTH) {
-            throw new IllegalArgumentException("Signature must be exactly " + LENGTH + " bytes");
+        this(signature, LENGTH);
+    }
+
+    protected Signature(byte[] signature, int expectedLength) {
+        if (signature == null || signature.length != expectedLength) {
+            throw new IllegalArgumentException("Signature must be exactly " + expectedLength + " bytes");
         }
         this.signature = Arrays.copyOf(signature, signature.length);
     }

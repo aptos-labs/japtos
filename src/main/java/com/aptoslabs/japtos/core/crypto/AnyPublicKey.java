@@ -1,5 +1,7 @@
 package com.aptoslabs.japtos.core.crypto;
 
+import com.aptoslabs.japtos.bcs.Deserializer;
+import com.aptoslabs.japtos.bcs.Serializable;
 import com.aptoslabs.japtos.bcs.Serializer;
 import com.aptoslabs.japtos.core.AccountAddress;
 import com.aptoslabs.japtos.core.AuthenticationKey;
@@ -8,10 +10,10 @@ import java.io.IOException;
 
 /**
  * Wrapper for any public key type supported by Aptos.
- * This allows MultiKey accounts to contain mixed key types (Ed25519, Keyless, etc.).
+ * This allows SingleKey and MultiKey accounts to contain mixed key types (Ed25519, Keyless, SLH-DSA-SHA2-128s, etc.).
  * Matches TypeScript SDK's AnyPublicKey implementation.
  */
-public class AnyPublicKey implements PublicKey {
+public class AnyPublicKey implements PublicKey, Serializable {
     
     /**
      * Public key variant identifiers matching TypeScript AnyPublicKeyVariant enum
@@ -21,6 +23,7 @@ public class AnyPublicKey implements PublicKey {
     public static final int VARIANT_SECP256R1 = 2;
     public static final int VARIANT_KEYLESS = 3;
     public static final int VARIANT_FEDERATED_KEYLESS = 4;
+    public static final int VARIANT_SLH_DSA_SHA2_128S = 5;
     
     private final PublicKey publicKey;
     private final int variant;
@@ -33,12 +36,17 @@ public class AnyPublicKey implements PublicKey {
      * @throws IllegalArgumentException if the key type is unsupported
      */
     public AnyPublicKey(PublicKey publicKey) {
+        if (publicKey == null) {
+            throw new IllegalArgumentException("Public key cannot be null");
+        }
         this.publicKey = publicKey;
         
         if (publicKey instanceof Ed25519PublicKey) {
             this.variant = VARIANT_ED25519;
         } else if (publicKey instanceof KeylessPublicKey) {
             this.variant = VARIANT_KEYLESS;
+        } else if (publicKey instanceof SlhDsaSha2128sPublicKey) {
+            this.variant = VARIANT_SLH_DSA_SHA2_128S;
         } else {
             throw new IllegalArgumentException("Unsupported public key type: " + publicKey.getClass().getName());
         }
@@ -51,7 +59,7 @@ public class AnyPublicKey implements PublicKey {
      * @return the deserialized AnyPublicKey
      * @throws IOException if deserialization fails
      */
-    public static AnyPublicKey deserialize(com.aptoslabs.japtos.bcs.Deserializer deserializer) 
+    public static AnyPublicKey deserialize(Deserializer deserializer)
             throws IOException {
         int variant = deserializer.deserializeUleb128AsU32();
         
@@ -63,8 +71,12 @@ public class AnyPublicKey implements PublicKey {
             case VARIANT_KEYLESS:
                 publicKey = KeylessPublicKey.deserialize(deserializer);
                 break;
+            case VARIANT_SLH_DSA_SHA2_128S:
+                publicKey = SlhDsaSha2128sPublicKey.deserialize(deserializer);
+                break;
             default:
-                throw new IOException("Unknown variant index for AnyPublicKey: " + variant);
+                throw new IOException("Unknown variant index for AnyPublicKey: " + variant
+                        + ". Ensure the corresponding signature-scheme support is available.");
         }
         
         return new AnyPublicKey(publicKey);
@@ -76,6 +88,7 @@ public class AnyPublicKey implements PublicKey {
      * @param serializer the serializer to write to
      * @throws IOException if serialization fails
      */
+    @Override
     public void serialize(Serializer serializer) throws IOException {
         serializer.serializeU32AsUleb128(variant);
         
@@ -83,6 +96,8 @@ public class AnyPublicKey implements PublicKey {
             ((Ed25519PublicKey) publicKey).serialize(serializer);
         } else if (publicKey instanceof KeylessPublicKey) {
             ((KeylessPublicKey) publicKey).serialize(serializer);
+        } else if (publicKey instanceof SlhDsaSha2128sPublicKey) {
+            ((SlhDsaSha2128sPublicKey) publicKey).serialize(serializer);
         } else {
             throw new IOException("Cannot serialize unsupported public key type");
         }

@@ -262,6 +262,22 @@ Ed25519Account account = Ed25519Account.fromPrivateKey(privateKey);
 Ed25519Account sameAccount = Ed25519Account.fromPrivateKeyHex("your_private_key_hex");
 ```
 
+Create a post-quantum SLH-DSA-SHA2-128s account (AIP-137):
+
+```java
+import com.aptoslabs.japtos.account.Account;
+import com.aptoslabs.japtos.account.SlhDsaSha2128sAccount;
+import com.aptoslabs.japtos.core.crypto.SlhDsaSha2128sPrivateKey;
+
+SlhDsaSha2128sAccount pqAccount = SlhDsaSha2128sAccount.create();
+// Or via the scheme-aware factory:
+Account sameScheme = Account.generate(Account.SigningScheme.SLH_DSA_SHA2_128S);
+
+// Import from an AIP-80 private key string ("slh-dsa-sha2-128s-priv-0x..."):
+SlhDsaSha2128sPrivateKey key = SlhDsaSha2128sPrivateKey.fromHex(pqAccount.getPrivateKeyHex(), true);
+SlhDsaSha2128sAccount imported = SlhDsaSha2128sAccount.fromPrivateKey(key);
+```
+
 ### Hierarchical Deterministic Wallets
 
 Derive an account from a BIP39 mnemonic using a BIP44 path (Aptos coin type is `637`):
@@ -623,8 +639,8 @@ Key types:
 
 | Category    | Classes                                                                 |
 | ----------- | ----------------------------------------------------------------------- |
-| Accounts    | `Account`, `Ed25519Account`, `MultiEd25519Account`, `MultiKeyAccount`   |
-| Crypto      | `Ed25519PrivateKey`, `Ed25519PublicKey`, `KeylessPublicKey`, `Signature`|
+| Accounts    | `Account`, `Ed25519Account`, `SlhDsaSha2128sAccount`, `MultiEd25519Account`, `MultiKeyAccount` |
+| Crypto      | `Ed25519PrivateKey`, `Ed25519PublicKey`, `SlhDsaSha2128sPrivateKey`, `SlhDsaSha2128sPublicKey`, `SlhDsaSha2128sSignature`, `AnyPublicKey`, `AnySignature`, `KeylessPublicKey`, `Signature` |
 | Transactions| `RawTransaction`, `SignedTransaction`, `TransactionPayload`, `EntryFunctionPayload`, `FeePayerRawTransaction` |
 | Types       | `AccountAddress`, `ModuleId`, `Identifier`, `TypeTag`, `StructTag`, `TransactionArgument`, `MoveOption` |
 | Client      | `AptosClient`, `AptosConfig`                                            |
