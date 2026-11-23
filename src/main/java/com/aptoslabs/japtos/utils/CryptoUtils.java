@@ -149,7 +149,7 @@ public class CryptoUtils {
                                     "This is required for Aptos authentication key derivation. " +
                                     "Please ensure you have the appropriate crypto library in your project:\n" +
                                     "For Android: implementation 'com.madgag.spongycastle:bctls-jdk15on:1.58.0.0'\n" +
-                                    "For Desktop: implementation 'org.bouncycastle:bcprov-jdk18on:1.77'",
+                                    "For Desktop: implementation 'org.bouncycastle:bcprov-jdk18on:1.87'",
                             e2
                     );
                 }
@@ -159,7 +159,7 @@ public class CryptoUtils {
                                 "This is required for Aptos authentication key derivation. " +
                                 "Please ensure you have the appropriate crypto library in your project:\n" +
                                 "For Android: implementation 'com.madgag.spongycastle:bctls-jdk15on:1.58.0.0'\n" +
-                                "For Desktop: implementation 'org.bouncycastle:bcprov-jdk18on:1.77'",
+                                "For Desktop: implementation 'org.bouncycastle:bcprov-jdk18on:1.87'",
                         e
                 );
             }
