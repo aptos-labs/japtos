@@ -38,7 +38,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>17</maven.compiler.release>
-    <okhttp.version>4.12.0</okhttp.version>
+    <okhttp.version>5.5.1</okhttp.version>
     <gson.version>2.10.1</gson.version>
     <bouncycastle.version>1.85</bouncycastle.version>
     <slf4j.version>2.0.9</slf4j.version>
@@ -61,10 +61,12 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- HTTP Client - Android compatible -->
+    <!-- HTTP Client - Android compatible. Since OkHttp 5, the plain `okhttp` artifact is
+         Kotlin Multiplatform metadata with no JVM classes; Maven/JVM consumers must use
+         `okhttp-jvm` (which is also the Android-compatible artifact). -->
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
+      <artifactId>okhttp-jvm</artifactId>
       <version>${okhttp.version}</version>
     </dependency>
 
