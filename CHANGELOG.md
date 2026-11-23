@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Updated Maven dependencies and plugins to their latest patch/minor releases within the
+  same major versions (including OkHttp 4.12.1, Gson 2.15.0, Bouncy Castle 1.87,
+  JUnit 5.14.4, and Mockito 5.24.0). No major-version upgrades.
 - Adopted the Aptos Innovation-Enabling Source Code License (replacing Apache License 2.0).
   Added a top-level `LICENSE` file, bundled it into the published jar, and updated the
   `pom.xml` license metadata.
