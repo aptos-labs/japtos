@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Updated dependencies to latest stable releases within the same major versions:
+  OkHttp (and MockWebServer) 4.12.0 → 4.12.1, Gson 2.10.1 → 2.15.0,
+  Bouncy Castle 1.85 → 1.87, SLF4J 2.0.9 → 2.0.20, JUnit BOM 5.11.0 → 5.14.4,
+  and Mockito 5.8.0 → 5.24.0 (bringing Byte Buddy 1.17.7). Also updated pinned
+  Maven plugin versions. Verified with OWASP/OSV vulnerability scans (no known
+  advisories in the pinned dependency set before or after) and `mvn verify -P unit-tests`.
 - Adopted the Aptos Innovation-Enabling Source Code License (replacing Apache License 2.0).
   Added a top-level `LICENSE` file, bundled it into the published jar, and updated the
   `pom.xml` license metadata.
