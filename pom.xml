@@ -168,7 +168,8 @@
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>central</publishingServerId>
-          <autoPublish>true</autoPublish>
+          <!-- Hold validated bundles in Central Portal for manual Publish approval. -->
+          <autoPublish>false</autoPublish>
         </configuration>
       </plugin>
 
