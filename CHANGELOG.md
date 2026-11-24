@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Updated Maven dependencies and plugins to their latest stable versions, including
+  JUnit 5.11.0 → 6.1.3 (major; requires Java 17, which the SDK already targets),
+  Gson 2.15.0, BouncyCastle 1.87, SLF4J 2.0.20, and Mockito 5.24.0. OkHttp is
+  intentionally held at 4.12.0 (see `pom.xml` comment): OkHttp 5 splits into
+  JVM/Android artifacts that a single Android-compatible jar cannot adopt safely yet.
 - Adopted the Aptos Innovation-Enabling Source Code License (replacing Apache License 2.0).
   Added a top-level `LICENSE` file, bundled it into the published jar, and updated the
   `pom.xml` license metadata.
