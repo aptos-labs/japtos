@@ -5,6 +5,7 @@ import com.aptoslabs.japtos.core.AuthenticationKey;
 import com.aptoslabs.japtos.core.crypto.Ed25519PrivateKey;
 import com.aptoslabs.japtos.core.crypto.PublicKey;
 import com.aptoslabs.japtos.core.crypto.Signature;
+import com.aptoslabs.japtos.core.crypto.SlhDsaSha2128sPrivateKey;
 import com.aptoslabs.japtos.transaction.RawTransaction;
 import com.aptoslabs.japtos.transaction.SignedTransaction;
 import com.aptoslabs.japtos.transaction.authenticator.AccountAuthenticator;
@@ -83,6 +84,24 @@ public abstract class Account {
     }
 
     /**
+     * Generates a new single-signer account for the specified signing scheme.
+     *
+     * @param scheme the signing scheme ({@link SigningScheme#ED25519} or {@link SigningScheme#SLH_DSA_SHA2_128S})
+     * @return a new Account using the requested signing scheme
+     * @throws IllegalArgumentException if the scheme is null or does not support single-key generation
+     */
+    public static Account generate(SigningScheme scheme) {
+        if (scheme == null) {
+            throw new IllegalArgumentException("Signing scheme cannot be null");
+        }
+        return switch (scheme) {
+            case ED25519 -> Ed25519Account.generate();
+            case SLH_DSA_SHA2_128S -> SlhDsaSha2128sAccount.create();
+            default -> throw new IllegalArgumentException("Unsupported single-key signing scheme: " + scheme);
+        };
+    }
+
+    /**
      * Creates an account from an existing private key.
      *
      * <p>This factory method creates the appropriate account type based on the
@@ -117,6 +136,27 @@ public abstract class Account {
      */
     public static Ed25519Account fromPrivateKey(CreateEd25519AccountFromPrivateKeyArgs args) {
         return new Ed25519Account(args.privateKey, args.address);
+    }
+
+    /**
+     * Creates an SLH-DSA-SHA2-128s account from an existing SLH-DSA-SHA2-128s private key.
+     *
+     * @param privateKey the SLH-DSA-SHA2-128s private key
+     * @return a new SlhDsaSha2128sAccount instance
+     */
+    public static SlhDsaSha2128sAccount fromPrivateKey(SlhDsaSha2128sPrivateKey privateKey) {
+        return SlhDsaSha2128sAccount.fromPrivateKey(privateKey);
+    }
+
+    /**
+     * Creates an SLH-DSA-SHA2-128s account from an existing private key and optional rotated address.
+     *
+     * @param privateKey the SLH-DSA-SHA2-128s private key
+     * @param address    optional account address (if rotated); derived from the public key when null
+     * @return a new SlhDsaSha2128sAccount instance
+     */
+    public static SlhDsaSha2128sAccount fromPrivateKey(SlhDsaSha2128sPrivateKey privateKey, AccountAddress address) {
+        return SlhDsaSha2128sAccount.fromPrivateKey(privateKey, address);
     }
 
     /**
@@ -155,6 +195,26 @@ public abstract class Account {
      */
     public static Ed25519Account fromDerivationPath(String path, String mnemonic) {
         return Ed25519Account.fromDerivationPath(path, mnemonic);
+    }
+
+    /**
+     * Creates an account from a derivation path and mnemonic for the specified signing scheme.
+     *
+     * @param path     the hardened derivation path (e.g., {@code m/44'/637'/0'/0'/0'})
+     * @param mnemonic the BIP39 mnemonic seed phrase
+     * @param scheme   the signing scheme ({@link SigningScheme#ED25519} or {@link SigningScheme#SLH_DSA_SHA2_128S})
+     * @return a new Account derived from the path and mnemonic
+     * @throws IllegalArgumentException if the scheme is null/unsupported or the path is invalid
+     */
+    public static Account fromDerivationPath(String path, String mnemonic, SigningScheme scheme) {
+        if (scheme == null) {
+            throw new IllegalArgumentException("Signing scheme cannot be null");
+        }
+        return switch (scheme) {
+            case ED25519 -> Ed25519Account.fromDerivationPath(path, mnemonic);
+            case SLH_DSA_SHA2_128S -> SlhDsaSha2128sAccount.createFromDerivationPath(path, mnemonic);
+            default -> throw new IllegalArgumentException("Unsupported single-key signing scheme: " + scheme);
+        };
     }
 
     /**
@@ -302,7 +362,9 @@ public abstract class Account {
     public enum SigningScheme {
         ED25519,
         MULTI_ED25519,
-        MULTI_KEY
+        MULTI_KEY,
+        /** SLH-DSA-SHA2-128s post-quantum scheme via SingleKey (AIP-137). */
+        SLH_DSA_SHA2_128S
     }
 
     /**

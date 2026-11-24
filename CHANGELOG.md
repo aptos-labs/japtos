@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- SLH-DSA-SHA2-128s post-quantum signature support (AIP-137), modeled on
+  aptos-ts-sdk PR #802: key generation, signing/verification via BouncyCastle
+  FIPS 205 (cross-checked against `@noble/post-quantum`), BCS
+  (de)serialization (`AnyPublicKey` variant 5, `AnySignature` variant 4),
+  `SingleKeyAuthenticator` (variant 2) with `SingleSender` transaction wrapping,
+  `SlhDsaSha2128sAccount` and scheme-aware `Account` factories, AIP-80
+  private-key strings (`slh-dsa-sha2-128s-priv-`), and hardened HD derivation
+  (SLIP-0010 with the `SLH-DSA-SHA2-128s seed` curve parameter).
+
 ### Changed
 - Updated Maven dependencies and plugins to their latest stable versions, including
   JUnit 5.11.0 → 6.1.3 (major; requires Java 17, which the SDK already targets),
